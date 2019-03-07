@@ -93,7 +93,7 @@ class BasicConvLSTMCell(ConvRNNCell):
       new_h = self._activation(new_c) * tf.nn.sigmoid(o)
 
       if self._state_is_tuple:
-        new_state = LSTMStateTuple(new_c, new_h)
+        new_state = (new_c, new_h)
       else:
         new_state = tf.concat(axis=3, values=[new_c, new_h])
       return new_h, new_state
