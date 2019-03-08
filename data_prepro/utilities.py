@@ -39,13 +39,13 @@ def padding_coord(img, coord, shape_r=224, shape_c=224):
     if rows_rate > cols_rate:
         new_cols = (original_shape[1] * shape_r) // original_shape[0]
         coord[:, 0] = (coord[:, 0] * shape_r) // original_shape[0]
-        coord[:, 0] = coord[:, 0] + ((img_padded.shape[1] - new_cols) // 2)
-        coord[:, 1] = int(coord[:, 1] * rows_rate)
+        coord[:, 0] = coord[:, 0] + ((shape_c - new_cols) // 2)
+        coord[:, 1] = (coord[:, 1] / rows_rate).astype('int32')
     else:
         new_rows = (original_shape[0] * shape_c) // original_shape[1]
         coord[:, 1] = (coord[:, 1] * shape_c) // original_shape[1]
-        coord[:, 1] = coord[:, 1] + ((img_padded.shape[0] - new_rows) // 2)
-        coord[:, 0] = int(coord[:, 0] * cols_rate)
+        coord[:, 1] = coord[:, 1] + ((shape_r - new_rows) // 2)
+        coord[:, 0] = (coord[:, 0] / cols_rate).astype('int32')
     return coord
 
 def resize_fixation(img, rows=480, cols=640):
@@ -169,45 +169,41 @@ def postprocess_predictions(pred, shape_r, shape_c):
     return img
 
 if __name__ == '__main__':
-    ORIGIN_RESOLUTION_IMG_DIR = ''
-    OUTPUT_IMG_DIR = ''
-    SCANPATH_FILE = ''
-    OUTPUT_SCANPATH_FILE = ''
-    IMG_NAME_PREFIX = ''
+    ORIGIN_RESOLUTION_IMG_SET = 'imgs.npy'
+    OUTPUT_IMG_SET = 'imgs_384_512.npy'
+    SCANPATH_FILE = 'ASD_origin_scanpath.npy'
+    OUTPUT_SCANPATH_FILE = 'ASD_384_512_scanpath.npy'
     CHANNELS = 3
-    NUM_STEPS = 8
+    NUM_STEPS = 10
 
     TO_ROW = 384
     TO_COL = 512
 
-    ORIGIN_RESOLUTION_IMG_DIR = os.path.join(DATA_DIR,
-            ORIGIN_RESOLUTION_IMG_DIR)
-    OUTPUT_IMG_DIR = os.path.join(DATA_DIR,
-            OUTPUT_IMG_DIR)
-    with open(os.path.join(SCANPATH_FILE)) as f
-        scanpath = pickle.load(f)
+    scanpath = np.load(os.path.join(DATA_DIR, SCANPATH_FILE), encoding = 'latin1')
+    imgs = np.load(os.path.join(DATA_DIR, ORIGIN_RESOLUTION_IMG_SET), encoding = 'latin1')
 
-    imgs = os.listdir()
-    imgs.sort(key = lambda x: int(x[len(IMG_NAME_PREFIX): -4])
     coord = []
-    for img_path in imgs:
-        img_id = int(img_path[len(IMG_NAME_PREFIX): -4])
-        img = cv2.imread(os.path.join(ORIGIN_RESOLUTION_IMG_DIR, img_path))
-        img = padding(img, TO_ROW, TO_COL, CHANNELS)
-        #cv2.imwrite(os.path.join(OUTPUT_IMG_DIR, img_path))
+    output_img_set = []
+
+    i = 0
+    for img_origin in imgs:
+        img = padding(img_origin, TO_ROW, TO_COL, CHANNELS)
+        output_img_set.append(img)
         coord_img = []
-        for scanpath_p in scanpath[img_id]:
+        for scanpath_p in scanpath[i]:
             scanpath_p = np.array(scanpath_p)
+            scanpath_p = padding_coord(img_origin, scanpath_p,
+                    TO_ROW, TO_COL)
             if len(scanpath_p) < NUM_STEPS:
                 a = np.zeros((NUM_STEPS, len(scanpath_p[0])))
-                a[0: len(scanpath_p)] = scanpath_p
+                a[0: len(scanpath_p), :] = scanpath_p
                 scanpath_p = a
             else:
                 scanpath_p = scanpath_p[0: NUM_STEPS, :]
-            scanpath_p = padding_coord(img, scanpath_p,
-                    TO_ROW, TO_COL)
             coord_img.append(scanpath_p)
         coord.append(coord_img)
-
+        i += 1
     coord = np.array(coord)
-    #np.save(OUTPUT_SCANPATH_FILE)
+    output_img_set = np.array(output_img_set)
+    np.save(os.path.join(DATA_DIR, OUTPUT_IMG_SET), output_img_set)
+    np.save(os.path.join(DATA_DIR, OUTPUT_SCANPATH_FILE), coord)
