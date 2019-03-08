@@ -6,4 +6,4 @@
 #
 #
 
-DATA_DIR = '/home/camerart/jqLee/icme-saccadic-code/data/TrainingData/'
+DATA_DIR = '/home/camerart/jqLee/icme-saccadic-code/data/'
