@@ -19,7 +19,7 @@ class TrainModeA:
                  print_every=1, save_every=1, log_path=None, filter_size=(3, 3),
                  inputs_channel=64, c_h_channel=1, forget_bias=1.0, init_hidden=None,
                  save_model_path=None, pretrained_model=None, feature_dir=None,
-                 scanpath_path=None, idxs=None, num_steps=8, num_validation=None):
+                 scanpath=None, idxs=None, num_steps=8, num_validation=None):
         self._learning_rate = learning_rate
         self._epochs = epochs
         self._batch_size = batch_size
@@ -27,12 +27,13 @@ class TrainModeA:
         self._save_every = save_every
         self._log_path = log_path
         self._feature_dir = feature_dir
-        self._scanpath_path = scanpath_path
+        self._scanpath = scanpath
         self._idxs = idxs
         self._num_validation = num_validation
         self._init_hidden = init_hidden
         self._save_model_path = save_model_path
         self._pretrained_model = pretrained_model
+        self._c_h_channel = c_h_channel
        
         self._preds = BasicSaccadicModel.BasicSaccadicModel(
                 shape=shape, filter_size=filter_size, inputs_channel=inputs_channel,
@@ -114,6 +115,20 @@ class TrainModeA:
         return loss
 
     def _generate_feed_dict(self, idxs):
-        
-
+        features = []
+        for idx in idxs:
+            feature = np.load(os.path.join(self._feature_dir, str(idx[0])+'.npy'))
+            features.append(feature)
+        features = np.array(features)
+        scanpaths = []
+        for idx in idxs:
+            scanpath = self._scanpath[idx[0]][idx[1]][:, :]
+            scanpaths.append(scanpath)
+        scanpaths = np.array(scanpaths)
+        h_init = self._init_hidden[idxs[:, 0]]
+        c_shape = self._model.c_init.shape
+        c_init = np.zeros((self._batch_size, c_shape[0], c_shape[1], self._c_h_channel))
+        feed_dict = {self._model.c_init: c_init, self._model.h_init: h_init,
+                self._model._inputs: features, self._labels_holder: scanpaths}
+        return feed_dict
         
