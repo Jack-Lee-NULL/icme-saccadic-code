@@ -75,6 +75,7 @@ class Main:
             self._test()
 
 if __name__ == '__main__':
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1'
     if len(sys.argv) != 3:
         raise TypeError('required 2 parameters,', len(sys.argv), 'given')
     if sys.argv[2] != 'train' and sys.argv != 'test':

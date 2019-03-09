@@ -61,7 +61,6 @@ class TrainModeA:
         n_iter_per_epochs = np.shape(train_idxs)[0] // self._batch_size
         
         config = tf.ConfigProto(allow_soft_placement=True)
-        config.gpu_options.per_process_gpu_memory_fraction = 0.9
         config.gpu_options.allow_growth = True
 
         prev_loss = -1
@@ -103,7 +102,10 @@ class TrainModeA:
                     current_loss = 0.0
                     predictions = sess.run(predicts, feed_dict)
                     predictions = self._decode_predicts(predictions)
+                    labels = feed_dict[slef._labels_holder]
+                    labels = self._decode_predicts(labels)
                     print(predictions)
+                    print(labels)
                     start_t = time.time()
                 if i % self._save_every == 0:
                     saver.save(sess, self._save_model_path, global_step=i)
@@ -113,13 +115,14 @@ class TrainModeA:
         predicts[:, :, 0] = predicts[:, :, 0] * self._shape[1]
         predicts[:, :, 1] = predicts[:, :, 1] * self._shape[0]
         predicts = predicts.astype('int32')
+        predicts = np.concatenate([predicts[:, :, 0], predicts[:, :, 0]], axis=1)
         return predicts
         
     def _compute_loss(self):
         preds = self._preds() 
         labels = self._labels_holder
         loss = 0.0
-        weight = preds > 0
+        weight = labels > 0
         weight = tf.cast(weight, dtype=tf.float32)
         preds = tf.multiply(preds, weight)
         loss = tf.losses.mean_squared_error(labels, preds)
