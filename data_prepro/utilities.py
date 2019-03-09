@@ -171,8 +171,8 @@ def postprocess_predictions(pred, shape_r, shape_c):
 if __name__ == '__main__':
     ORIGIN_RESOLUTION_IMG_SET = 'imgs.npy'
     OUTPUT_IMG_SET = 'imgs_384_512.npy'
-    SCANPATH_FILE = 'TD_origin_scanpath.npy'
-    OUTPUT_SCANPATH_FILE = 'TD_384_512_scanpath.npy'
+    SCANPATH_FILE = 'ASD_origin_scanpath.npy'
+    OUTPUT_SCANPATH_FILE = 'ASD_384_512_scanpath.npy'
     CHANNELS = 3
     NUM_STEPS = 10
 
@@ -200,6 +200,7 @@ if __name__ == '__main__':
                 scanpath_p = a
             else:
                 scanpath_p = scanpath_p[0: NUM_STEPS, :]
+            scanpath_p = scanpath_p.astype('float32')
             scanpath_p[:, 0] = scanpath_p[:, 0] / TO_COL
             scanpath_p[:, 1] = scanpath_p[:, 1] / TO_ROW
             coord_img.append(scanpath_p)

@@ -36,6 +36,7 @@ class TrainModeA:
         self._pretrained_model = pretrained_model
         self._c_h_channel = c_h_channel
         self._num_steps = num_steps
+        self._shape = shape
        
         self._preds = BasicSaccadicModel.BasicSaccadicModel(
                 shape=shape, filter_size=filter_size, inputs_channel=inputs_channel,
@@ -45,6 +46,7 @@ class TrainModeA:
 
     def train(self):
 
+        predicts = self._preds()
         loss = self._compute_loss()
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=self._learning_rate)
         train_op = optimizer.minimize(loss)
@@ -84,25 +86,34 @@ class TrainModeA:
                     feed_dict = self._generate_feed_dict(idxs)
                     _, l = sess.run([train_op, loss], feed_dict)
                     current_loss += l
-                    if j % 10 == 0:
+                    if j % 2 == 0:
                         summary = sess.run(batch_loss, feed_dict)
                         summary_writer.add_summary(summary, i * n_iter_per_epochs + j)
-                    if j % 20 == 0:
+                    if j % 4 == 0:
                         np.random.shuffle(validation_idxs)
                         idxs = validation_idxs[0: self._batch_size, :]
                         feed_dict = self._generate_feed_dict(idxs)
                         summary = sess.run(validation_loss, feed_dict)
                         summary_writer.add_summary(summary, i * n_iter_per_epochs + j)
-                if i % print_every:
+                if i % self._print_every == 0:
                     print("Previous loss:", prev_loss)
                     print("Current loss:", current_loss)
                     print("Elapsed time:", time.time() - start_t)
                     prev_loss = current_loss
                     current_loss = 0.0
-                if i % save_every:
+                    predictions = sess.run(predicts, feed_dict)
+                    predictions = self._decode_predicts(predictions)
+                    print(predictions)
+                    start_t = time.time()
+                if i % self._save_every == 0:
                     saver.save(sess, self._save_model_path, global_step=i)
                     print('Model has been saved to', self._save_model_path)
                 
+    def _decode_predicts(self, predicts):
+        predicts[:, :, 0] = predicts[:, :, 0] * self._shape[1]
+        predicts[:, :, 1] = predicts[:, :, 1] * self._shape[0]
+        predicts = predicts.astype('int32')
+        return predicts
         
     def _compute_loss(self):
         preds = self._preds() 

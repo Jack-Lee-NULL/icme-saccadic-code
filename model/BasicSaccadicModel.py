@@ -67,7 +67,9 @@ class BasicSaccadicModel:
                 w = tf.get_variable('ouput_w', shape=(h_flatten.shape[1], 2),
                         dtype=tf.float32)
                 b = tf.get_variable('output_b', shape=(1, 2), dtype=tf.float32)
-            output = tf.matmul(h_flatten, w) + b
-            preds.append(tf.expand_dims(output, axis=1))
+            output = tf.tf.matmul(h_flatten, w) + b
+            pred = tf.expand_dims(output, axis=1)
+            pred = tf.math.sigmoid(pred)
+            preds.append(pred)
         preds = tf.concat(preds, axis=1)
         return preds
