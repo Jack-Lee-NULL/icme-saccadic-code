@@ -13,7 +13,7 @@ from configparser import ConfigParser
 
 import numpy as np
 
-from model import *
+from train import *
 
 class Main:
 
@@ -65,6 +65,7 @@ class Main:
                 forget_bias=forget_bias, init_hidden=init_hidden, save_model_path=save_model_path,
                 pretrained_model=pretrained_model, feature_dir=feature_dir,
                 scanpath=scanpath, idxs=idxs, num_steps=num_steps, num_validation=num_validation)
+        train.train()
 
 
     def run(self):

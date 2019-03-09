@@ -7,7 +7,7 @@
 
 import tensorflow as tf
 
-from BasicConvLSTMCell import BasicConvLSTMCell
+from model.BasicConvLSTMCell import BasicConvLSTMCell
 
 class BasicSaccadicModel:
     """A basic model to predict scanpath, just use basic conv-lstm
@@ -56,17 +56,18 @@ class BasicSaccadicModel:
             -preds: a list, output of this model
         """
         preds = []
-        for i in range(self._num_step):
+        for i in range(self._num_steps):
             if i == 0:
                c = self._c_init
                h = self._h_init
             inputs = self._inputs
-            (c, h) = self._cell(inputs, state=(c, h), scope='BSM')
+            c, h = self._cell(inputs, state=(c, h), scope='BSM')
             h_flatten = tf.layers.flatten(h)
-            with tf.varaiable_scope('BSM', reuse=tf.AUTO_REUSE)
-                w = tf.get_variable('ouput_w', shape=(h_flatten.shape[0], 2)
+            with tf.variable_scope('BSM', reuse=tf.AUTO_REUSE):
+                w = tf.get_variable('ouput_w', shape=(h_flatten.shape[1], 2),
                         dtype=tf.float32)
                 b = tf.get_variable('output_b', shape=(1, 2), dtype=tf.float32)
             output = tf.matmul(h_flatten, w) + b
-            preds.append(output)
+            preds.append(tf.expand_dims(output, axis=1))
+        preds = tf.concat(preds, axis=1)
         return preds

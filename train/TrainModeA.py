@@ -7,6 +7,7 @@
 #
 
 import time
+import os
 
 import numpy as np
 import tensorflow as tf
@@ -15,7 +16,7 @@ from model import *
 
 class TrainModeA:
 
-    def __init__(self, learning_rate=0.0005, epochs=20, batch_size=10, shape=(384, 512)
+    def __init__(self, learning_rate=0.0005, epochs=20, batch_size=10, shape=(384, 512),
                  print_every=1, save_every=1, log_path=None, filter_size=(3, 3),
                  inputs_channel=64, c_h_channel=1, forget_bias=1.0, init_hidden=None,
                  save_model_path=None, pretrained_model=None, feature_dir=None,
@@ -34,11 +35,12 @@ class TrainModeA:
         self._save_model_path = save_model_path
         self._pretrained_model = pretrained_model
         self._c_h_channel = c_h_channel
+        self._num_steps = num_steps
        
         self._preds = BasicSaccadicModel.BasicSaccadicModel(
                 shape=shape, filter_size=filter_size, inputs_channel=inputs_channel,
-                c_h_channel=c_h_channel, forget_bias=forget_bias, num_steps)
-        self._labels_holder=tf.placeholder('labels', shape=(None, num_steps, 2),
+                c_h_channel=c_h_channel, forget_bias=forget_bias, num_steps=num_steps)
+        self._labels_holder=tf.placeholder(name='labels', shape=(None, num_steps, 2),
                 dtype=tf.float32)
 
     def train(self):
@@ -56,15 +58,6 @@ class TrainModeA:
 
         n_iter_per_epochs = np.shape(train_idxs)[0] // self._batch_size
         
-        print('The number of epochs:', self._epochs)
-        print('Training data size:', np.shape(train_idxs)[0])
-        print('Validating data size:', np.shape(validation_idxs)[0])
-        print('Iterations per epoch:', n_iter_per_epochs)
-        print('Log path:', self._log_path)
-        print('Print every', self._print_every, 'epochs')
-        print('Save model to', self._save_model_path, 'every',
-                self._save_every, 'epochs')
-
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.per_process_gpu_memory_fraction = 0.9
         config.gpu_options.allow_growth = True
@@ -72,22 +65,32 @@ class TrainModeA:
         prev_loss = -1
         current_loss = 0.0
         start_t = time.time()
-        summary_writer = tf.summary.FileWriter(self._log_path, graph=tf.get_default_graph())
-        saver = tf.train.Saver(max_to_keep=20)
         with tf.Session(config=config) as sess:
+            tf.initializers.global_variables().run()
+            summary_writer = tf.summary.FileWriter(self._log_path, graph=tf.get_default_graph())
+            saver = tf.train.Saver(max_to_keep=20)
+            print('The number of epochs:', self._epochs)
+            print('Training data size:', np.shape(train_idxs)[0])
+            print('Validating data size:', np.shape(validation_idxs)[0])
+            print('Iterations per epoch:', n_iter_per_epochs)
+            print('Log path:', self._log_path)
+            print('Print every', self._print_every, 'epochs')
+            print('Save model to', self._save_model_path, 'every',
+                self._save_every, 'epochs')
             for i in range(self._epochs):
-                np.shuffle(train_idxs)
+                np.random.shuffle(train_idxs)
                 for j in range(n_iter_per_epochs):
                     idxs = train_idxs[j * self._batch_size: (j + 1) * self._batch_size, :]
                     feed_dict = self._generate_feed_dict(idxs)
-                    _, loss = sess.run([train_op, loss], feed_dict)
-                    current_loss += loss                    
+                    _, l = sess.run([train_op, loss], feed_dict)
+                    current_loss += l
                     if j % 10 == 0:
                         summary = sess.run(batch_loss, feed_dict)
                         summary_writer.add_summary(summary, i * n_iter_per_epochs + j)
                     if j % 20 == 0:
-                        np.shuffle(validation_idxs)
-                        feed_dict = self._generate_feed_dict(validation_idxs)
+                        np.random.shuffle(validation_idxs)
+                        idxs = validation_idxs[0: self._batch_size, :]
+                        feed_dict = self._generate_feed_dict(idxs)
                         summary = sess.run(validation_loss, feed_dict)
                         summary_writer.add_summary(summary, i * n_iter_per_epochs + j)
                 if i % print_every:
@@ -105,13 +108,21 @@ class TrainModeA:
         preds = self._preds() 
         labels = self._labels_holder
         loss = 0.0
-        for i in range(self._num_step):
-            pred = preds[:, i, :]
+        weight = preds > 0
+        weight = tf.cast(weight, dtype=tf.float32)
+        preds = tf.multiply(preds, weight)
+        loss = tf.losses.mean_squared_error(labels, preds)
+        loss = loss * self._batch_size
+        """
+        for i in range(self._num_steps):
+            pred = preds[i, :, :]
+            print(labels.shape.as_list())
             labels = labels[:, i,:]
             weight = pred > 0
             weight = tf.cast(weight, dtype=tf.float32)
-            pred = tf.math.multiply(pred, weight)
+            pred = tf.multiply(pred, weight)
             loss += tf.losses.mean_squared_error(labels, pred)
+        """
         return loss
 
     def _generate_feed_dict(self, idxs):
@@ -125,10 +136,11 @@ class TrainModeA:
             scanpath = self._scanpath[idx[0]][idx[1]][:, :]
             scanpaths.append(scanpath)
         scanpaths = np.array(scanpaths)
-        h_init = self._init_hidden[idxs[:, 0]]
-        c_shape = self._model.c_init.shape
-        c_init = np.zeros((self._batch_size, c_shape[0], c_shape[1], self._c_h_channel))
-        feed_dict = {self._model.c_init: c_init, self._model.h_init: h_init,
-                self._model._inputs: features, self._labels_holder: scanpaths}
+        scanpaths = scanpaths[:, 0: self._num_steps, 0: 2]
+        h_init = self._init_hidden[idxs[:, 0], :, :, np.newaxis]
+        c_shape = self._preds.c_init.shape.as_list()
+        c_init = np.zeros((self._batch_size, c_shape[1], c_shape[2], self._c_h_channel))
+        feed_dict = {self._preds.c_init: c_init, self._preds.h_init: h_init,
+                self._preds._inputs: features, self._labels_holder: scanpaths}
         return feed_dict
         

@@ -96,7 +96,7 @@ class BasicConvLSTMCell(ConvRNNCell):
         new_state = (new_c, new_h)
       else:
         new_state = tf.concat(axis=3, values=[new_c, new_h])
-      return new_h, new_state
+      return new_state
 
 def _conv_linear(args, filter_size, num_features, bias, bias_start=0.0, scope=None):
   """convolution:
@@ -126,7 +126,7 @@ def _conv_linear(args, filter_size, num_features, bias, bias_start=0.0, scope=No
   dtype = [a.dtype for a in args][0]
 
   # Now the computation.
-  with tf.variable_scope(scope or "Conv"):
+  with tf.variable_scope(scope or "Conv", reuse=tf.AUTO_REUSE):
     matrix = tf.get_variable(
         "Matrix", [filter_size[0], filter_size[1], total_arg_size_depth, num_features], dtype=dtype)
     if len(args) == 1:
