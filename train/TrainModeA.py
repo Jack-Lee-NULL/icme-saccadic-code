@@ -90,7 +90,7 @@ class TrainModeA:
                         summary_writer.add_summary(summary, i * n_iter_per_epochs + j)
                     if j % 4 == 0:
                         np.random.shuffle(validation_idxs)
-                        idxs = validation_idxs[0: self._batch_size, :]
+                        idxs = validation_idxs[0: 10, :]
                         feed_dict = self._generate_feed_dict(idxs)
                         summary = sess.run(validation_loss, feed_dict)
                         summary_writer.add_summary(summary, i * n_iter_per_epochs + j)
@@ -126,7 +126,7 @@ class TrainModeA:
         weight = tf.cast(weight, dtype=tf.float32)
         preds = tf.multiply(preds, weight)
         loss = tf.losses.mean_squared_error(labels, preds)
-        loss = loss * self._batch_size
+        loss = loss * self._num_steps
         """
         for i in range(self._num_steps):
             pred = preds[i, :, :]
@@ -152,8 +152,7 @@ class TrainModeA:
         scanpaths = np.array(scanpaths)
         scanpaths = scanpaths[:, 0: self._num_steps, 0: 2]
         h_init = self._init_hidden[idxs[:, 0], :, :, np.newaxis]
-        c_shape = self._preds.c_init.shape.as_list()
-        c_init = np.zeros((self._batch_size, c_shape[1], c_shape[2], self._c_h_channel))
+        c_init = np.zeros((np.shape(idxs)[0], self._shape[0], self._shape[1], self._c_h_channel))
         feed_dict = {self._preds.c_init: c_init, self._preds.h_init: h_init,
                 self._preds._inputs: features, self._labels_holder: scanpaths}
         return feed_dict
