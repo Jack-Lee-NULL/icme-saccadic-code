@@ -102,20 +102,20 @@ class TrainModeA:
                     current_loss = 0.0
                     predictions = sess.run(predicts, feed_dict)
                     predictions = self._decode_predicts(predictions)
-                    labels = feed_dict[slef._labels_holder]
+                    labels = feed_dict[self._labels_holder]
                     labels = self._decode_predicts(labels)
                     print(predictions)
                     print(labels)
                     start_t = time.time()
                 if i % self._save_every == 0:
-                    saver.save(sess, self._save_model_path, global_step=i)
+                    saver.save(sess, os.path.join(self._save_model_path, 'model'), global_step=i)
                     print('Model has been saved to', self._save_model_path)
                 
     def _decode_predicts(self, predicts):
         predicts[:, :, 0] = predicts[:, :, 0] * self._shape[1]
         predicts[:, :, 1] = predicts[:, :, 1] * self._shape[0]
         predicts = predicts.astype('int32')
-        predicts = np.concatenate([predicts[:, :, 0], predicts[:, :, 0]], axis=1)
+        predicts = np.concatenate([predicts[:, :, 0], predicts[:, :, 1]], axis=1)
         return predicts
         
     def _compute_loss(self):
