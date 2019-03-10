@@ -21,12 +21,12 @@ def generate_id(scanpath):
     return idxs
 
 if __name__ == '__main__':
-    SCANPATH_PATH = 'TD_384_512_scanpath.npy'
-    OUTPUT_PATH = 'TD_idxs.npy'
+    SCANPATH_PATH = 'ASD_384_512_scanpath.npy'
+    OUTPUT_PATH = 'ASD_test_idxs.npy'
 
     SCANPATH_PATH = os.path.join(DATA_DIR, SCANPATH_PATH)
     OUTPUT_PATH = os.path.join(DATA_DIR, OUTPUT_PATH)
     scanpath = np.load(SCANPATH_PATH)
-    idxs = generate_id(scanpath)
+    idxs = generate_id(scanpath[0: 10])
     print(np.shape(idxs))
     np.save(OUTPUT_PATH, idxs)

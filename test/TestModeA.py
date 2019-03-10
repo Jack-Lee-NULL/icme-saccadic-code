@@ -10,11 +10,11 @@ from model import *
 
 class TestModeA:
 
-    def __init__(self, pretrained_model, feature_dir, 
+    def __init__(self, trained_model, feature_dir, 
             shape, filter_size, inputs_channel, c_h_channel,
             forget_bias, init_hidden, num_steps, idxs, batch_size,
             preds_path):
-        self._pretrained_model = pretrained_model
+        self._trained_model = trained_model
         self._feature_dir = feature_dir
         self._shape = shape
         self._init_hidden = init_hidden
@@ -33,7 +33,7 @@ class TestModeA:
         predictor = self._predictor()
         with tf.Session(config=config) as sess:
             saver = tf.train.Saver()
-            saver.restore(sess, self._pretrained_model)
+            saver.restore(sess, self._trained_model)
             preds = []
             for i in range(n_iters):
                 idxs = self._idxs[i * self._batch_size, (i + 1) * self._batch_size, :]

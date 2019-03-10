@@ -92,7 +92,7 @@ class TrainModeA:
                         summary_writer.add_summary(summary, i * n_iter_per_epochs + j)
                     if j % 4 == 0:
                         np.random.shuffle(validation_idxs)
-                        idxs = validation_idxs[0: 10, :]
+                        idxs = validation_idxs[0: self._batch_size, :]
                         feed_dict = self._generate_feed_dict(idxs)
                         summary = sess.run(validation_loss, feed_dict)
                         summary_writer.add_summary(summary, i * n_iter_per_epochs + j)
