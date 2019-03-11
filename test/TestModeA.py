@@ -52,6 +52,7 @@ class TestModeA:
                 pred = sess.run(predictor, feed_dict)
                 preds.append(pred)               
         preds = np.concatenate(preds, axis=0)
+        preds = self.decode_preds(preds)
         np.save(self._preds_path, preds)
         print ("Predictions have been saved to", self._preds_path)
         
@@ -67,10 +68,9 @@ class TestModeA:
                 self._predictor.inputs: features}
         return feed_dict
 
-    def decode_preds(self):
+    def decode_preds(self, predicts):
         predicts[:, :, 0] = predicts[:, :, 0] * self._shape[1]
         predicts[:, :, 1] = predicts[:, :, 1] * self._shape[0]
         predicts = predicts.astype('int32')
-        predicts = np.concatenate([predicts[:, :, 0], predicts[:, :, 1]], axis=1)
         return predicts
 

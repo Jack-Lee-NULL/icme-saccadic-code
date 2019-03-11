@@ -171,13 +171,15 @@ def postprocess_predictions(pred, shape_r, shape_c):
 if __name__ == '__main__':
     ORIGIN_RESOLUTION_IMG_SET = 'imgs.npy'
     OUTPUT_IMG_SET = 'imgs_384_512.npy'
-    SCANPATH_FILE = 'ASD_origin_scanpath.npy'
-    OUTPUT_SCANPATH_FILE = 'ASD_384_512_scanpath.npy'
+    SCANPATH_FILE = 'TD_origin_scanpath.npy'
+    OUTPUT_SCANPATH_FILE = 'TD_768_1024_scanpath.npy'
     CHANNELS = 3
     NUM_STEPS = 10
+    NORMALIZATION = False
+    SAVE_IMG_SET = False
 
-    TO_ROW = 384
-    TO_COL = 512
+    TO_ROW = 768
+    TO_COL = 1024
 
     scanpath = np.load(os.path.join(DATA_DIR, SCANPATH_FILE), encoding = 'latin1')
     imgs = np.load(os.path.join(DATA_DIR, ORIGIN_RESOLUTION_IMG_SET), encoding = 'latin1')
@@ -201,12 +203,14 @@ if __name__ == '__main__':
             else:
                 scanpath_p = scanpath_p[0: NUM_STEPS, :]
             scanpath_p = scanpath_p.astype('float32')
-            scanpath_p[:, 0] = scanpath_p[:, 0] / TO_COL
-            scanpath_p[:, 1] = scanpath_p[:, 1] / TO_ROW
+            if NORMALIZATION:
+                scanpath_p[:, 0] = scanpath_p[:, 0] / TO_COL
+                scanpath_p[:, 1] = scanpath_p[:, 1] / TO_ROW
             coord_img.append(scanpath_p)
         coord.append(coord_img)
         i += 1
     coord = np.array(coord)
     output_img_set = np.array(output_img_set)
-    #np.save(os.path.join(DATA_DIR, OUTPUT_IMG_SET), output_img_set)
     np.save(os.path.join(DATA_DIR, OUTPUT_SCANPATH_FILE), coord)
+    if SAVE_IMG_SET:
+        np.save(os.path.join(DATA_DIR, OUTPUT_IMG_SET), output_img_set)
