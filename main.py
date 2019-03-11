@@ -34,8 +34,8 @@ class Main:
         self.print_every = self._config.getint(self._section, 'print_every', fallback=1)
         self.save_every = self._config.getint(self._section, 'save_every', fallback=1)
         self.log_path = self._config.get(self._section, 'log_path')
-        self.filter_size_r = self._config.get(self._section, 'filter_size_r', fallback=3)
-        self.filter_size_c = self._config.get(self._section, 'filter_size_c', fallback=3)
+        filter_size_r = self._config.get(self._section, 'filter_size_r', fallback=3)
+        filter_size_c = self._config.get(self._section, 'filter_size_c', fallback=3)
         self.filter_size = (filter_size_r, filter_size_c)
         self.inputs_channel = self._config.getint(self._section, 'inputs_channel', fallback=64)
         self.c_h_channel = self._config.getint(self._section, 'c_h_channel', fallback=1)
@@ -58,8 +58,13 @@ class Main:
     def _test(self):
         init_hidden = np.load(self.test_init_hidden)
         idxs = np.load(self.test_idxs)
-        tester = 
-         
+        predictor = TestModeA.TestModeA(trained_model=self.trained_model,
+                feature_dir=self.feature_dir, shape=self.shape,
+                filter_size=self.filter_size, inputs_channel=self.inputs_channel,
+                c_h_channel=self.c_h_channel, forget_bias=self.forget_bias,
+                init_hidden=init_hidden, num_steps=self.num_steps,
+                idxs=idxs, batch_size=self.batch_size, preds_path=self.preds_path)
+        predictor.predicts()
 
     def _train(self):
         init_hidden = np.load(self.init_hidden_path)
@@ -90,7 +95,7 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = '0, 1'
     if len(sys.argv) != 3:
         raise TypeError('required 2 parameters,', len(sys.argv), 'given')
-    if sys.argv[2] != 'train' and sys.argv != 'test':
+    if sys.argv[2] != 'train' and sys.argv[2] != 'test':
         raise TypeError('2nd parameter required \'test\' or \'train\'')
     main = Main(sys.argv[1], sys.argv[2])
     main.run()

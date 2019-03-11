@@ -6,6 +6,11 @@
 #
 #
 
+import os
+
+import numpy as np
+import tensorflow as tf
+
 from model import *
 
 class TestModeA:
@@ -22,6 +27,7 @@ class TestModeA:
         self._idxs = idxs
         self._batch_size = batch_size
         self._preds_path = preds_path
+        self._c_h_channel = c_h_channel
         self._predictor = BasicSaccadicModel.BasicSaccadicModel(
                 shape=shape, filter_size=filter_size, inputs_channel=inputs_channel,
                 c_h_channel=c_h_channel, forget_bias=forget_bias, num_steps=num_steps)
@@ -36,12 +42,12 @@ class TestModeA:
             saver.restore(sess, self._trained_model)
             preds = []
             for i in range(n_iters):
-                idxs = self._idxs[i * self._batch_size, (i + 1) * self._batch_size, :]
+                idxs = self._idxs[i * self._batch_size: (i + 1) * self._batch_size, :]
                 feed_dict = self._generate_feed_dict(idxs)
                 pred = sess.run(predictor, feed_dict)
                 preds.append(pred)
             if np.shape(self._idxs)[0] % self._batch_size != 0:
-                idxs = self._idxs[i * self._batch_size, np.shape(self._idxs)[0], :]
+                idxs = self._idxs[i * self._batch_size: np.shape(self._idxs)[0], :]
                 feed_dict = self._generate_feed_dict(idxs)
                 pred = sess.run(predictor, feed_dict)
                 preds.append(pred)               
@@ -50,7 +56,7 @@ class TestModeA:
         print ("Predictions have been saved to", self._preds_path)
         
     def _generate_feed_dict(self, idxs):
-        c_init = np.zeros((self._batch_size, self._shape[0], self._shape[1], self._c_h_channel))
+        c_init = np.zeros((np.shape(idxs)[0], self._shape[0], self._shape[1], self._c_h_channel))
         h_init = self._init_hidden[idxs[:, 0], :, :, np.newaxis]
         features = []
         for idx in idxs:
