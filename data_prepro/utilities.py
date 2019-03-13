@@ -171,8 +171,8 @@ def postprocess_predictions(pred, shape_r, shape_c):
 if __name__ == '__main__':
     ORIGIN_RESOLUTION_IMG_SET = 'imgs.npy'
     OUTPUT_IMG_SET = 'imgs_384_512.npy'
-    SCANPATH_FILE = 'TD_origin_scanpath.npy'
-    OUTPUT_SCANPATH_FILE = 'TD_768_1024_scanpath.npy'
+    SCANPATH_FILE = 'ASD_origin_scanpath.npy'
+    OUTPUT_SCANPATH_FILE = 'ASD_768_1024_scanpath.npy'
     CHANNELS = 3
     NUM_STEPS = 10
     NORMALIZATION = False

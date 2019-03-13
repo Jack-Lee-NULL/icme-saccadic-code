@@ -129,16 +129,6 @@ class TrainModeA:
         preds = tf.multiply(preds, weight)
         loss = tf.losses.mean_squared_error(labels, preds)
         loss = loss * self._num_steps
-        """
-        for i in range(self._num_steps):
-            pred = preds[i, :, :]
-            print(labels.shape.as_list())
-            labels = labels[:, i,:]
-            weight = pred > 0
-            weight = tf.cast(weight, dtype=tf.float32)
-            pred = tf.multiply(pred, weight)
-            loss += tf.losses.mean_squared_error(labels, pred)
-        """
         return loss
 
     def _generate_feed_dict(self, idxs):

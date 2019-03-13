@@ -27,11 +27,16 @@ class BasicSaccadicModel:
             -activation: Activation function of the inner states
             -num_steps: int, the number of cells.
         """
+        """
         self._cell = []
         for i in range(num_steps):
             self._cell.append(BasicConvLSTMCell(shape, filter_size,
                 num_features=c_h_channel, forget_bias=forget_bias,
                 activation=activation, state_is_tuple=True))
+        """
+        self._cell = BasicConvLSTMCell(shape, filter_size,
+                num_features=c_h_channel, forget_bias=forget_bias,
+                activation=activation, state_is_tuple=True)
         self._num_steps = num_steps
         self._c_init = tf.placeholder(tf.float32, 
                 (None, shape[0], shape[1], c_h_channel), name='c_init')
@@ -63,9 +68,10 @@ class BasicSaccadicModel:
                c = self._c_init
                h = self._h_init
             inputs = self._inputs
-            c, h = self._cell[i](inputs, state=(c, h), scope='BSM_'+str(i))
+            scope = 'BSM_'#+str(i)
+            c, h = self._cell(inputs, state=(c, h), scope=scope)
             h_flatten = tf.layers.flatten(h)
-            with tf.variable_scope('BSM', reuse=tf.AUTO_REUSE):
+            with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
                 w = tf.get_variable('ouput_w', shape=(h_flatten.shape[1], 2),
                         dtype=tf.float32)
                 b = tf.get_variable('output_b', shape=(1, 2), dtype=tf.float32)
