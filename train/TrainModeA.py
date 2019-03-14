@@ -37,11 +37,22 @@ class TrainModeA:
         self._c_h_channel = c_h_channel
         self._num_steps = num_steps
         self._shape = shape
-       
+        self._filter_size = filter_size
+        self._inputs_channel = inputs_channel
+        self._forget_bias = forget_bias
+
+        self._init_model()
+        self._init_holder()       
+
+    def _init_model(self):
         self._preds = BasicSaccadicModel.BasicSaccadicModel(
-                shape=shape, filter_size=filter_size, inputs_channel=inputs_channel,
-                c_h_channel=c_h_channel, forget_bias=forget_bias, num_steps=num_steps)
-        self._labels_holder=tf.placeholder(name='labels', shape=(None, num_steps, 2),
+                shape=self._shape, filter_size=self._filter_size, 
+                inputs_channel=self._inputs_channel,
+                c_h_channel=self._c_h_channel, forget_bias=self._forget_bias,
+                num_steps=self._num_steps)
+
+    def _init_holder(self):
+        self._labels_holder=tf.placeholder(name='labels', shape=(None, self._num_steps, 2),
                 dtype=tf.float32)
 
     def train(self):
@@ -148,4 +159,3 @@ class TrainModeA:
         feed_dict = {self._preds.c_init: c_init, self._preds.h_init: h_init,
                 self._preds._inputs: features, self._labels_holder: scanpaths}
         return feed_dict
-        
