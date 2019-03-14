@@ -40,7 +40,7 @@ class Main:
         self.inputs_channel = self._config.getint(self._section, 'inputs_channel', fallback=64)
         self.c_h_channel = self._config.getint(self._section, 'c_h_channel', fallback=1)
         self.forget_bias = self._config.getfloat(self._section, 'forget_bias', fallback=1.0)
-        self.init_hidden_path = self._config.get(self._section, 'init_hidden_path')
+        self.init_hidden_path = self._config.get(self._section, 'init_hidden_path', fallback=None)
         self.save_model_path = self._config.get(self._section, 'save_model_path')
         self.pretrained_model = self._config.get(self._section, 'pretrained_model', fallback=None)
         self.feature_dir = self._config.get(self._section, 'feature_dir')
@@ -67,7 +67,10 @@ class Main:
         predictor.predicts()
 
     def _train(self):
-        init_hidden = np.load(self.init_hidden_path)
+        if self.init_hidden_path != None:
+            init_hidden = np.load(self.init_hidden_path)
+        else:
+            init_hidden = None
         scanpath = np.load(self.scanpath_path)
         idxs = np.load(self.idxs_path)
         if not os.path.exists(self.save_model_path):
