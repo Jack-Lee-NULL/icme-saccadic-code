@@ -14,7 +14,7 @@ class DResConvLSTM:
     """Double resolution conv-lstm
     """
 
-    def __init__(self, filter_size, inputs_channel, shape=(48, 64),
+    def __init__(self, filter_size=(3, 3, 3, 3), inputs_channel, shape=(48, 64, 16, 16),
             c_h_channel=(1, 1), forget_bias=(1.0, 1.0),
             activation=(tf.nn.tanh, tf.nn.tanh), num_steps=8):
         """Intialize double resolution conv-lstm model. lr(low resolution),
@@ -35,6 +35,28 @@ class DResConvLSTM:
            -num_steps: int, the number of cells
         """
         self._num_steps = num_steps
+        self.lr_c_init = tf.placeholder(tf.float32,
+                (None, shape[0], shape[1], c_h_channel[0]), name='lr_c_init')
+        self.hr_c_init = tf.placeholder(tf.float32,
+                (None, shape[2], shape[3], c_h_channel[1]), name='hr_c_init')
+        self.lr_h_init = tf.placeholder(tf.float32,
+                (None, shape[0], shape[1], c_h_channel[0]), name='lr_h_init')
+        self.hr_h_init = tf.placeholder(tf.float32,
+                (None, shape[2], shape[3], c_h_channel[1]), name='hr_h_init')
+        self.lr_inputs = tf.placeholder(tf.float32,
+                (None, shape[0], shape[1], inputs_channel[0]), name='lr_inputs')
+        self.hr_inputs = tf.placeholder(tf.float32,
+                (None, shape[2], shape[3], inputs_channel[1]), name='hr_inputs')
+        self._cell = DResConvLSTMCell(
+                filter_size_lr=(filter_size[0], filter_size[1]),
+                filter_size_hr=(filter_size[2], filter_size[3]),
+                inputs_channel=inputs_channel,
+                shape_lr=(shape[0], shape[1]),
+                shape_hr=(shape[2], shape[3]),
+                c_h_channel=c_h_channel,
+                forget_bias=forget_bias,
+                activation=activation)
+        """
         self._cell = []
         for _ in range(num_steps):
             self._cell.append(DResConvLSTMCell(
@@ -46,18 +68,8 @@ class DResConvLSTM:
                     c_h_channel=c_h_channel,
                     forget_bias=forget_bias,
                     activation=activation))
-            self._lr_c_init = tf.placeholder(tf.float32,
-                    (None, shape[0], shape[1], c_h_channel[0]), name='lr_c_init')
-            self._hr_c_init = tf.placeholder(tf.float32,
-                    (None, shape[2], shape[3], c_h_channel[1]), name='hr_c_init')
-            self._lr_h_init = tf.placeholder(tf.float32,
-                    (None, shape[0], shape[1], c_h_channel[0]), name='lr_h_init')
-            self._hr_h_init = tf.placeholder(tf.float32,
-                    (None, shape[2], shape[3], c_h_channel[1]), name='hr_h_init')
-            self._lr_inputs = tf.placeholder(tf.float32,
-                    (None, shape[0], shape[1], inputs_channel[0]), name='lr_inputs')
-            self._hr_inputs = tf.placeholder(tf.float32,
-                    (None, shape[2], shape[3], inputs_channel[1]), name='hr_inputs')
+
+        """
 
     def __call__(self):
         """construct double resolution conv-lstm model
@@ -70,17 +82,18 @@ class DResConvLSTM:
         lr_preds = []
         hr_preds = []
         for i in range(self._num_steps):
-            scope = 'DRes_Conv_LSTM' + str(i)
+            scope = 'DRes_Conv_LSTM' #+ str(i)
             if i == 0:
-                lr_c = self._lr_c_init
-                lr_h = self._lr_h_init
-                hr_c = self._hr_c_init
-                hr_h = self._hr_h_init
+                lr_c = self.lr_c_init
+                lr_h = self.lr_h_init
+                hr_c = self.hr_c_init
+                hr_h = self.hr_h_init
                 state = (lr_c, lr_h, hr_c, hr_h)
-            inputs = (self._lr_inputs[:, i, :, :, :],
-                    self._hr_inputs[:, i, :, :, :])
-            state, lr_pred, hr_pred = self._cell[i](
+            inputs = (self.lr_inputs[:, i, :, :, :],
+                    self.hr_inputs[:, i, :, :, :])
+            state, lr_pred, hr_pred = self._cell(
                     state=state, inputs=inputs, scope=scope)
             lr_preds.append(lr_pred)
             hr_preds.append(hr_pred)
         return lr_preds, hr_preds
+
