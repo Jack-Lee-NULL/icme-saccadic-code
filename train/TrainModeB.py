@@ -6,7 +6,7 @@
 #
 #
 
-from TrainModeA import TrainModeA
+from train.TrainModeA import TrainModeA
 
 class TrainModeB(TrainModeA):
 

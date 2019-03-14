@@ -6,7 +6,12 @@
 #
 #
 
-from TrainModeA import TrainModeA
+import os
+import cv2
+
+import numpy as np
+
+from train.TrainModeA import TrainModeA
 
 class TrainModeC(TrainModeA):
     """Train BasicSaccadicModel with human first fixation as start point

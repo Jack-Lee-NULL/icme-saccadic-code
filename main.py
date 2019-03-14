@@ -23,8 +23,11 @@ class Main:
         self._mode = mode
         self._config = ConfigParser()
         self._config.read('config.ini')
-        self._train_mode = {}
-        self._test_mode = {}
+        self._train_modes = {'A': self._train_A, 'C': self._train_C}
+        self._test_modes = {}
+        self._train_mode = self._config.get(self._section, 'train_mode', fallback='A')
+        self._test_mode = self._config.get(self._section, 'test_mode', fallback='A')
+
         self.learning_rate = self._config.getfloat(self._section, 'learning_rate', fallback=0.0005)
         self.epochs = self._config.getint(self._section, 'epochs', fallback=20)
         self.batch_size = self._config.getint(self._section, 'batch_size', fallback=10)
@@ -66,7 +69,7 @@ class Main:
                 idxs=idxs, batch_size=self.batch_size, preds_path=self.preds_path)
         predictor.predicts()
 
-    def _train(self):
+    def _train_A(self):
         if self.init_hidden_path != None:
             init_hidden = np.load(self.init_hidden_path)
         else:
@@ -87,10 +90,30 @@ class Main:
                 num_validation=self.num_validation)
         train.train()
 
+    def _train_C(self):
+        if self.init_hidden_path != None:
+            init_hidden = np.load(self.init_hidden_path)
+        else:
+            init_hidden = None
+        scanpath = np.load(self.scanpath_path)
+        idxs = np.load(self.idxs_path)
+        if not os.path.exists(self.save_model_path):
+            os.mkdir(self.save_model_path)
+        
+        train = TrainModeC.TrainModeC(learning_rate=self.learning_rate, epochs=self.epochs,
+                batch_size=self.batch_size, shape=self.shape, print_every=self.print_every, 
+                save_every=self.save_every, log_path=self.log_path,
+                filter_size=self.filter_size, inputs_channel=self.inputs_channel, 
+                c_h_channel=self.c_h_channel, forget_bias=self.forget_bias, 
+                init_hidden=init_hidden, save_model_path=self.save_model_path,
+                pretrained_model=self.pretrained_model, feature_dir=self.feature_dir,
+                scanpath=scanpath, idxs=idxs, num_steps=self.num_steps, 
+                num_validation=self.num_validation)
+        train.train()
 
     def run(self):
         if self._mode == 'train':
-            self._train()
+            self._train_modes[self._train_mode]()
         else:
             self._test()
 
