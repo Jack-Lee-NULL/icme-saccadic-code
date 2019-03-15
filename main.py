@@ -23,7 +23,7 @@ class Main:
         self._mode = mode
         self._config = ConfigParser()
         self._config.read('config.ini')
-        self._train_modes = {'A': self._train_A, 'C': self._train_C}
+        self._train_modes = {'A': self._train_A, 'B': self._train_B, 'C': self._train_C}
         self._test_modes = {}
         self._train_mode = self._config.get(self._section, 'train_mode', fallback='A')
         self._test_mode = self._config.get(self._section, 'test_mode', fallback='A')
@@ -46,8 +46,8 @@ class Main:
         self.init_hidden_path = self._config.get(self._section, 'init_hidden_path', fallback=None)
         self.save_model_path = self._config.get(self._section, 'save_model_path')
         self.pretrained_model = self._config.get(self._section, 'pretrained_model', fallback=None)
-        self.feature_dir = self._config.get(self._section, 'feature_dir')
-        self.scanpath_path = self._config.get(self._section, 'scanpath_path')
+        self.feature_dir = self._config.get(self._section, 'feature_dir', fallback=None)
+        self.scanpath_path = self._config.get(self._section, 'scanpath_path', fallback=None)
         self.idxs_path = self._config.get(self._section, 'idxs_path')
         self.num_steps = self._config.getint(self._section, 'num_steps', fallback=8)
         self.num_validation = self._config.getint(self._section, 'num_validation', fallback=10)
@@ -108,6 +108,45 @@ class Main:
                 init_hidden=init_hidden, save_model_path=self.save_model_path,
                 pretrained_model=self.pretrained_model, feature_dir=self.feature_dir,
                 scanpath=scanpath, idxs=idxs, num_steps=self.num_steps, 
+                num_validation=self.num_validation)
+        train.train()
+
+    def _train_B(self):
+        shape_lr_r = self._config.getint(self._section, 'shape_lr_r', fallback=48)
+        shape_lr_c = self._config.getint(self._section, 'shape_lr_c', fallback=64)
+        shape_hr_r = self._config.getint(self._section, 'shape_hr_r', fallback=16)
+        shape_hr_c = self._config.getint(self._section, 'shape_hr_c', fallback=16)
+        self.shape = (shape_lr_r, shape_lr_c, shape_hr_r, shape_hr_c)
+        filter_size_lr_r = self._config.getint(self._section, 'filter_size_lr_r', fallback=16)
+        filter_size_lr_c = self._config.getint(self._section, 'filter_size_lr_c', fallback=16)
+        filter_size_hr_r = self._config.getint(self._section, 'filter_size_hr_r', fallback=16)
+        filter_size_hr_c = self._config.getint(self._section, 'filter_size_hr_c', fallback=16)
+        self.filter_size = (filter_size_lr_r, filter_size_lr_c, filter_size_hr_r,
+                filter_size_hr_c)
+        inputs_channel_lr = self._config.getint(self._section, 'inputs_channel_lr', fallback=2048)
+        inputs_channel_hr = self._config.getint(self._section, 'inputs_channel_hr', fallback=64)
+        self.inputs_channel = (inputs_channel_lr, inputs_channel_hr)
+        c_h_channel_lr = self._config.getint(self._section, 'c_h_channel_lr', fallback=1)
+        c_h_channel_hr = self._config.getint(self._section, 'c_h_channel_hr', fallback=1)
+        self.c_h_channel = (c_h_channel_lr, c_h_channel_hr)
+        forget_bias_lr = self._config.getfloat(self._section, 'forget_bias_lr', fallback=1.0)
+        forget_bias_hr = self._config.getfloat(self._section, 'forget_bias_hr', fallback=1.0)
+        self.forget_bias = (forget_bias_lr, forget_bias_hr)
+        scanpath_path_lr = self._config.get(self._section, 'scanpath_path_lr')
+        scanpath_path_hr = self._config.get(self._section, 'scanpath_path_hr')
+        self.scanpath = (np.load(scanpath_path_lr), np.load(scanpath_path_hr))
+        feature_dir_lr = self._config.get(self._section, 'feature_dir_lr')
+        feature_dir_hr = self._config.get(self._section, 'feature_dir_hr')
+        self.feature_dir = (feature_dir_lr, feature_dir_hr)
+        self.idxs = np.load(self.idxs_path)
+        
+        train = TrainModeB.TrainModeB(learning_rate=self.learning_rate, epochs=self.epochs,
+                batch_size=self.batch_size, shape=self.shape, print_every=self.print_every,
+                save_every=self.save_every, log_path=self.log_path, filter_size=self.filter_size,
+                inputs_channel=self.inputs_channel, c_h_channel=self.c_h_channel,
+                forget_bias=self.forget_bias, save_model_path=self.save_model_path,
+                pretrained_model=self.pretrained_model, feature_dir=self.feature_dir,
+                scanpath=self.scanpath, idxs=self.idxs, num_steps=self.num_steps, 
                 num_validation=self.num_validation)
         train.train()
 

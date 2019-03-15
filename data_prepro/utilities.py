@@ -170,16 +170,16 @@ def postprocess_predictions(pred, shape_r, shape_c):
 
 if __name__ == '__main__':
     ORIGIN_RESOLUTION_IMG_SET = 'imgs.npy'
-    OUTPUT_IMG_SET = 'imgs_384_512.npy'
+    OUTPUT_IMG_SET = 'imgs_768_1024.npy'
     SCANPATH_FILE = 'ASD_origin_scanpath.npy'
-    OUTPUT_SCANPATH_FILE = 'ASD_768_1024_scanpath.npy'
+    OUTPUT_SCANPATH_FILE = 'ASD_48_64_normalized_scanpath.npy'
     CHANNELS = 3
     NUM_STEPS = 10
-    NORMALIZATION = False
+    NORMALIZATION = True
     SAVE_IMG_SET = False
 
-    TO_ROW = 768
-    TO_COL = 1024
+    TO_ROW = 48
+    TO_COL = 64
 
     scanpath = np.load(os.path.join(DATA_DIR, SCANPATH_FILE), encoding = 'latin1')
     imgs = np.load(os.path.join(DATA_DIR, ORIGIN_RESOLUTION_IMG_SET), encoding = 'latin1')
@@ -196,6 +196,7 @@ if __name__ == '__main__':
             scanpath_p = np.array(scanpath_p)
             scanpath_p = padding_coord(img_origin, scanpath_p,
                     TO_ROW, TO_COL)
+            scanpath_p[:, 0: 2] = scanpath_p[:, 0: 2]
             if len(scanpath_p) < NUM_STEPS:
                 a = np.zeros((NUM_STEPS, len(scanpath_p[0])))
                 a[0: len(scanpath_p), :] = scanpath_p
@@ -204,6 +205,8 @@ if __name__ == '__main__':
                 scanpath_p = scanpath_p[0: NUM_STEPS, :]
             scanpath_p = scanpath_p.astype('float32')
             if NORMALIZATION:
+                scanpath_p[:, 0][scanpath_p[:, 0] > TO_COL - 1] = TO_COL - 1
+                scanpath_p[:, 1][scanpath_p[:, 1] > TO_ROW - 1] = TO_ROW - 1
                 scanpath_p[:, 0] = scanpath_p[:, 0] / TO_COL
                 scanpath_p[:, 1] = scanpath_p[:, 1] / TO_ROW
             coord_img.append(scanpath_p)
