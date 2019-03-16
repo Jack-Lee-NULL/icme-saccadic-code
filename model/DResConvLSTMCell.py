@@ -14,8 +14,7 @@ class DResConvLSTMCell:
     """Double resolution conv-lstm cell
     """
 
-    def __init__(self, filter_size_lr, filter_size_hr, inputs_channel,
-            shape_lr=(48, 64),
+    def __init__(self, filter_size_lr, filter_size_hr, shape_lr=(48, 64),
             shape_hr=(16, 16), c_h_channel=(1, 1), forget_bias=(1.0, 1.0),
             activation=(tf.nn.tanh, tf.nn.tanh)):
         """Intialize double resolution conv-lstm cell. lr(low resolution),
@@ -27,8 +26,6 @@ class DResConvLSTMCell:
            state and cell state of high resolution conv-lstm
            -filter_size_lr: a tuple, (rows, cols), lr filter size
            -filter_size_hr:a tuple, (rows, cols), hr filter size
-           -inputs_channel: a tuple, the number of inputs channel of
-           (lr, hr)
            -c_h_channel: a tuple, the number of channels of hidden 
            and cell state of hr and lr.
            -forget_bias: a tuple, (float, float), the bias added 
@@ -60,18 +57,18 @@ class DResConvLSTMCell:
             img by lr conv-lstm cell
         """
         lr_state, lr_preds = self._run_lr_cell(
-                state=(state[0], state[1]), inputs=inputs[0], scope=scope+'_lr')
+                state=(state[0], state[1]), inputs=inputs[0], scope=scope)
         hr_input_c = tf.nn.max_pool(lr_state[0], 
                 ksize=(1, self._pool_ksize[0], self._pool_ksize[1], 1),
                 strides=self._pool_strides, padding='SAME')
         hr_input = tf.concat([inputs[1], hr_input_c], axis=3)
         hr_state, hr_preds = self._run_hr_cell(
-                state=(state[2], state[3]), inputs=hr_input, scope=scope+'hr')
+                state=(state[2], state[3]), inputs=hr_input, scope=scope)
         new_state = (lr_state[0], lr_state[1], hr_state[0], hr_state[1])
         return new_state, lr_preds, hr_preds
 
     def _run_lr_cell(self, state, inputs, scope='DR_CONV_LSTM'):
-        lr_c, lr_h = self._lr_cell(inputs, state=state, scope=scope)
+        lr_c, lr_h = self._lr_cell(inputs, state=state, scope=scope+'_lr')
         lr_h_flatten = tf.layers.flatten(lr_h)
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             w = tf.get_variable('lr_ouput_w', shape=(lr_h_flatten.shape[1], 2),
@@ -85,7 +82,7 @@ class DResConvLSTMCell:
         return new_state, preds
 
     def _run_hr_cell(self, state, inputs, scope='DR_CONV_LSTM'):
-        hr_c, hr_h = self._hr_cell(inputs, state=state, scope=scope)
+        hr_c, hr_h = self._hr_cell(inputs, state=state, scope=scope+'_hr')
         hr_h_flatten = tf.layers.flatten(hr_h)
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             w = tf.get_variable('hr_output_w', shape=(hr_h_flatten.shape[1], 2),

@@ -51,6 +51,8 @@ class TrainModeB(TrainModeA):
     def _init_holder(self):
         self._lr_labels_holder = tf.placeholder(name='lr_labels', shape=(None, self._num_steps, 2), dtype=tf.float32)
         self._hr_labels_holder = tf.placeholder(name='hr_labels', shape=(None, self._num_steps, 2), dtype=tf.float32)
+        self._labels_holder=tf.placeholder(name='labels', shape=(2, None, self._num_steps, 2),
+                dtype=tf.float32)
 
     def _compute_loss(self):
         preds = self._preds()
@@ -80,6 +82,7 @@ class TrainModeB(TrainModeA):
         preds[:, :, 0] = lr_preds[:, :, 0] * self._shape[3] + hr_preds[:, :, 0]
         preds[:, :, 1] = lr_preds[:, :, 1] * self._shape[2] + hr_preds[:, :, 1]
         preds = preds.astype('int32')
+        preds = np.concatenate([preds[:, :, 0], preds[:, :, 0]], axis=1)
         return preds
         
 
@@ -150,5 +153,6 @@ class TrainModeB(TrainModeA):
         feed_dict = {self._lr_labels_holder: lr_scanpaths, self._hr_labels_holder: hr_scanpaths,
                 self._preds.lr_h_init: lr_h_init, self._preds.hr_h_init: hr_h_init,
                 self._preds.lr_c_init: lr_c_init, self._preds.hr_c_init: hr_c_init,
-                self._preds.lr_inputs: lr_features, self._preds.hr_inputs: hr_features}
+                self._preds.lr_inputs: lr_features, self._preds.hr_inputs: hr_features,
+                self._labels_holder: [lr_scanpaths, hr_scanpaths]}
         return feed_dict

@@ -107,6 +107,9 @@ class TrainModeA:
                         feed_dict = self._generate_feed_dict(idxs)
                         summary = sess.run(validation_loss, feed_dict)
                         summary_writer.add_summary(summary, i * n_iter_per_epochs + j)
+                if i % self._save_every == 0:
+                    saver.save(sess, os.path.join(self._save_model_path, 'model'), global_step=i)
+                    print('Model has been saved to', self._save_model_path)
                 if i % self._print_every == 0:
                     print("Previous loss:", prev_loss)
                     print("Current loss:", current_loss)
@@ -120,9 +123,6 @@ class TrainModeA:
                     print(predictions)
                     print(labels)
                     start_t = time.time()
-                if i % self._save_every == 0:
-                    saver.save(sess, os.path.join(self._save_model_path, 'model'), global_step=i)
-                    print('Model has been saved to', self._save_model_path)
                 
     def _decode_predicts(self, predicts):
         predicts[:, :, 0] = predicts[:, :, 0] * self._shape[1]

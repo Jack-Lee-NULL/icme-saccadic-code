@@ -50,7 +50,6 @@ class DResConvLSTM:
         self._cell = DResConvLSTMCell(
                 filter_size_lr=(filter_size[0], filter_size[1]),
                 filter_size_hr=(filter_size[2], filter_size[3]),
-                inputs_channel=inputs_channel,
                 shape_lr=(shape[0], shape[1]),
                 shape_hr=(shape[2], shape[3]),
                 c_h_channel=c_h_channel,
