@@ -33,6 +33,7 @@ class DResConvLSTMCell:
            -activation: a tuple, Activation function of the inner states
            of lr and hr
         """
+        self._shape_lr = shape_lr
         self._lr_cell = BasicConvLSTMCell(shape_lr, filter_size_lr,
                 num_features=c_h_channel[0], forget_bias=forget_bias[0],
                 activation=activation[0], state_is_tuple=True)
@@ -61,11 +62,18 @@ class DResConvLSTMCell:
         hr_input_c = tf.nn.max_pool(lr_state[0], 
                 ksize=(1, self._pool_ksize[0], self._pool_ksize[1], 1),
                 strides=self._pool_strides, padding='SAME')
+        region_idx = self._get_region_id(lr_preds[:, 0, :])
         hr_input = tf.concat([inputs[1], hr_input_c], axis=3)
         hr_state, hr_preds = self._run_hr_cell(
                 state=(state[2], state[3]), inputs=hr_input, scope=scope)
         new_state = (lr_state[0], lr_state[1], hr_state[0], hr_state[1])
         return new_state, lr_preds, hr_preds
+
+    def _get_region_id(self, coord):
+        x = tf.round(coord[:, 0] * self._shape_lr[1])
+        y = tf.round(coord[:, 1] * self._shape_lr[0])
+        idx = y * self._shape_lr[1] + x
+        return idx
 
     def _run_lr_cell(self, state, inputs, scope='DR_CONV_LSTM'):
         lr_c, lr_h = self._lr_cell(inputs, state=state, scope=scope+'_lr')

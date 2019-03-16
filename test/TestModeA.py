@@ -17,8 +17,8 @@ class TestModeA:
 
     def __init__(self, trained_model, feature_dir, 
             shape, filter_size, inputs_channel, c_h_channel,
-            forget_bias, init_hidden, num_steps, idxs, batch_size,
-            preds_path):
+            forget_bias, num_steps, idxs, batch_size,
+            preds_path, init_hidden=None):
         self._trained_model = trained_model
         self._feature_dir = feature_dir
         self._shape = shape
@@ -28,9 +28,18 @@ class TestModeA:
         self._batch_size = batch_size
         self._preds_path = preds_path
         self._c_h_channel = c_h_channel
+        self._filter_size = filter_size
+        self._inputs_channel = inputs_channel
+        self._forget_bias = forget_bias
+        self._init_model()
+
+    def _init_model(self):
         self._predictor = BasicSaccadicModel.BasicSaccadicModel(
-                shape=shape, filter_size=filter_size, inputs_channel=inputs_channel,
-                c_h_channel=c_h_channel, forget_bias=forget_bias, num_steps=num_steps)
+                shape=self._shape, filter_size=self._filter_size,
+                inputs_channel=self._inputs_channel,
+                c_h_channel=self._c_h_channel, forget_bias=self._forget_bias,
+                num_steps=self._num_steps)
+     
 
     def predicts(self):
         config = tf.ConfigProto(allow_soft_placement=True)

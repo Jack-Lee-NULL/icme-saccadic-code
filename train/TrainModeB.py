@@ -82,19 +82,18 @@ class TrainModeB(TrainModeA):
         preds[:, :, 0] = lr_preds[:, :, 0] * self._shape[3] + hr_preds[:, :, 0]
         preds[:, :, 1] = lr_preds[:, :, 1] * self._shape[2] + hr_preds[:, :, 1]
         preds = preds.astype('int32')
-        preds = np.concatenate([preds[:, :, 0], preds[:, :, 0]], axis=1)
+        preds = np.concatenate([preds[:, :, 0], preds[:, :, 1]], axis=1)
         return preds
         
-
-    def __get_hr_feature_idx(self, coord):
-        """Gnerate the idx in hr region feature, for sake of
-        drawing regions of feature as a list.
-        """
-        x = np.around(coord[:, 0] * self._shape[1], 0)
-        y = np.around(coord[:, 1] * self._shape[0], 0)
-        idx = y * self._shape[1] + x
-        idx = idx.astype('int32')
-        return idx
+    #def __get_hr_feature_idx(self, coord):
+    #    """Gnerate the idx in hr region feature, for sake of
+    #    drawing regions of feature as a list.
+    #    """
+    #    x = np.around(coord[:, 0] * self._shape[1], 0)
+    #    y = np.around(coord[:, 1] * self._shape[0], 0)
+    #    idx = y * self._shape[1] + x
+    #    idx = idx.astype('int32')
+    #    return idx
 
     def __get_h_init(self, shape, coord, kernel_size):
         """Generate initial hidden state by using Gaussian kernel
@@ -121,9 +120,9 @@ class TrainModeB(TrainModeA):
         for idx in idxs:
             lr_feature = np.load(os.path.join(self._feature_dir[0], str(idx[0])+'.npy'))
             hr_feature = np.load(os.path.join(self._feature_dir[1], str(idx[0])+'.npy'))
-            region_idx = self.__get_hr_feature_idx(self._scanpath[0][idx[0]][idx[1]][0: 8, :])
+#            region_idx = self.__get_hr_feature_idx(self._scanpath[0][idx[0]][idx[1]][0: 8, :])
             lr_features.append(lr_feature[:, :, :])
-            hr_features.append(hr_feature[region_idx, :, :, :])
+            hr_features.append(hr_feature[:, :, :, :])
         lr_features = np.array(lr_features)
         hr_features = np.array(hr_features)
         lr_scanpaths = []

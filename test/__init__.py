@@ -6,4 +6,4 @@
 #
 #
 
-__all__ = ['TestModeA']
+__all__ = ['TestModeA', 'TestModeB']

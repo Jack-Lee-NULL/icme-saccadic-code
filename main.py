@@ -24,7 +24,7 @@ class Main:
         self._config = ConfigParser()
         self._config.read('config.ini')
         self._train_modes = {'A': self._train_A, 'B': self._train_B, 'C': self._train_C}
-        self._test_modes = {}
+        self._test_modes = {'A': self._test_A, 'B': self._test_B}
         self._train_mode = self._config.get(self._section, 'train_mode', fallback='A')
         self._test_mode = self._config.get(self._section, 'test_mode', fallback='A')
 
@@ -58,7 +58,7 @@ class Main:
         self.test_idxs = self._config.get(self._section, 'test_idxs', fallback=None)
         self.preds_path = self._config.get(self._section, 'preds_path', fallback=None)
 
-    def _test(self):
+    def _test_A(self):
         init_hidden = np.load(self.test_init_hidden)
         idxs = np.load(self.test_idxs)
         predictor = TestModeA.TestModeA(trained_model=self.trained_model,
@@ -67,6 +67,16 @@ class Main:
                 c_h_channel=self.c_h_channel, forget_bias=self.forget_bias,
                 init_hidden=init_hidden, num_steps=self.num_steps,
                 idxs=idxs, batch_size=self.batch_size, preds_path=self.preds_path)
+        predictor.predicts()
+
+    def _test_B(self):
+        idxs = np.load(self.test_idxs)
+        predictor = TestModeA.TestModeA(trained_model=self.trained_model,
+                feature_dir=self.feature_dir, shape=self.shape,
+                filter_size=self.filter_size, inputs_channel=self.inputs_channel,
+                c_h_channel=self.c_h_channel, forget_bias=self.forget_bias,
+                num_steps=self.num_steps,
+                idxs=idxs, batch_size=self.batch_size, preds_path=self.preds_path)       
         predictor.predicts()
 
     def _train_A(self):
@@ -154,7 +164,7 @@ class Main:
         if self._mode == 'train':
             self._train_modes[self._train_mode]()
         else:
-            self._test()
+            self._test_modes[self._test_mode]()
 
 if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = '0, 1'

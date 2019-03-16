@@ -46,7 +46,7 @@ class DResConvLSTM:
         self.lr_inputs = tf.placeholder(tf.float32,
                 (None, shape[0], shape[1], inputs_channel[0]), name='lr_inputs')
         self.hr_inputs = tf.placeholder(tf.float32,
-                (None, num_steps, shape[2], shape[3], inputs_channel[1]), name='hr_inputs')
+                (None, shape[0] * shape[1], shape[2], shape[3], inputs_channel[1]), name='hr_inputs')
         self._cell = DResConvLSTMCell(
                 filter_size_lr=(filter_size[0], filter_size[1]),
                 filter_size_hr=(filter_size[2], filter_size[3]),
