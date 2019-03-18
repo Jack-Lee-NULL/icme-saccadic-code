@@ -47,14 +47,12 @@ class DResConvLSTM:
                 (None, shape[0], shape[1], inputs_channel[0]), name='lr_inputs')
         self.hr_inputs = tf.placeholder(tf.float32,
                 (None, shape[0] * shape[1], shape[2], shape[3], inputs_channel[1]), name='hr_inputs')
-        self._cell = DResConvLSTMCell(
-                filter_size_lr=(filter_size[0], filter_size[1]),
-                filter_size_hr=(filter_size[2], filter_size[3]),
-                shape_lr=(shape[0], shape[1]),
-                shape_hr=(shape[2], shape[3]),
-                c_h_channel=c_h_channel,
-                forget_bias=forget_bias,
-                activation=activation)
+        self._filter_size = filter_size
+        self._shape = shape
+        self._c_h_channel = c_h_channel
+        self._activation = activation
+        self._forget_bias = forget_bias
+        self._init_cell()
         """
         self._cell = []
         for _ in range(num_steps):
@@ -69,6 +67,16 @@ class DResConvLSTM:
                     activation=activation))
 
         """
+
+    def _init_cell(self):
+        self._cell = DResConvLSTMCell(
+                filter_size_lr=(self._filter_size[0], self._filter_size[1]),
+                filter_size_hr=(self._filter_size[2], self._filter_size[3]),
+                shape_lr=(self._shape[0], self._shape[1]),
+                shape_hr=(self._shape[2], self._shape[3]),
+                c_h_channel=self._c_h_channel,
+                forget_bias=self._forget_bias,
+                activation=self._activation)
 
     def __call__(self):
         """construct double resolution conv-lstm model
