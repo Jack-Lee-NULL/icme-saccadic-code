@@ -147,8 +147,8 @@ class TrainModeB(TrainModeA):
                     kernel_size=7))
         lr_h_init = np.array(lr_h_init)
         hr_h_init = np.array(hr_h_init)
-        lr_c_init = np.zeros((np.shape(idxs)[0], self._shape[0], self._shape[1], 1))
-        hr_c_init = np.zeros((np.shape(idxs)[0], self._shape[2], self._shape[3], 1))
+        lr_c_init = np.zeros((np.shape(idxs)[0], self._shape[0], self._shape[1], self._c_h_channel[0]))
+        hr_c_init = np.zeros((np.shape(idxs)[0], self._shape[2], self._shape[3], self._c_h_channel[2]))
         feed_dict = {self._lr_labels_holder: lr_scanpaths, self._hr_labels_holder: hr_scanpaths,
                 self._preds.lr_h_init: lr_h_init, self._preds.hr_h_init: hr_h_init,
                 self._preds.lr_c_init: lr_c_init, self._preds.hr_c_init: hr_c_init,
