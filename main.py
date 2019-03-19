@@ -25,7 +25,8 @@ class Main:
         self._config.read('config.ini')
         self._train_modes = {'A': self._train_A, 'B': self._train_B,
                 'C': self._train_C, 'D': self._train_D}
-        self._test_modes = {'A': self._test_A, 'B': self._test_B}
+        self._test_modes = {'A': self._test_A, 'B': self._test_B,
+                'D': self._test_D}
         self._train_mode = self._config.get(self._section, 'train_mode', fallback='A')
         self._test_mode = self._config.get(self._section, 'test_mode', fallback='A')
 
@@ -103,9 +104,19 @@ class Main:
 
     def _test_B(self):
         self._read_B_data()
-
         idxs = np.load(self.test_idxs)
         predictor = TestModeB.TestModeB(trained_model=self.trained_model,
+                feature_dir=self.feature_dir, shape=self.shape,
+                filter_size=self.filter_size, inputs_channel=self.inputs_channel,
+                c_h_channel=self.c_h_channel, forget_bias=self.forget_bias,
+                num_steps=self.num_steps,
+                idxs=idxs, batch_size=self.batch_size, preds_path=self.preds_path)       
+        predictor.predicts()
+
+    def _test_D(self):
+        self._read_B_data()
+        idxs = np.load(self.test_idxs)
+        predictor = TestModeD.TestModeD(trained_model=self.trained_model,
                 feature_dir=self.feature_dir, shape=self.shape,
                 filter_size=self.filter_size, inputs_channel=self.inputs_channel,
                 c_h_channel=self.c_h_channel, forget_bias=self.forget_bias,
@@ -187,7 +198,7 @@ class Main:
             self._test_modes[self._test_mode]()
 
 if __name__ == '__main__':
-    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1'
     if len(sys.argv) != 3:
         raise TypeError('required 2 parameters,', len(sys.argv), 'given')
     if sys.argv[2] != 'train' and sys.argv[2] != 'test':
