@@ -32,8 +32,8 @@ class ModifiedConvLSTMCellA:
            f = tf.multiply(h, inputs)
            matrix1 = tf.get_variable(
                    'Matrix1', [self._filter_size[0], self._filter_size[1],
-                    inputs.shape[3], self._num_features],
-                    dtype=tf.float32)
+                   inputs.shape[3], self._num_features],
+                   dtype=tf.float32)
            matrix2 = tf.get_variable(
                    'Matrix2', [self._filter_size[0], self._filter_size[1],
                    inputs.shape[3], self._num_features], dtype=tf.float32)

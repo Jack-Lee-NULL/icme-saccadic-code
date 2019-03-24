@@ -46,7 +46,7 @@ class TrainModeB(TrainModeA):
         self._preds = DResConvLSTM(filter_size=self._filter_size,
                 inputs_channel=self._inputs_channel, shape=self._shape,
                 c_h_channel=self._c_h_channel, forget_bias=self._forget_bias,
-                num_steps=self._num_steps)
+                num_steps=self._num_steps, batch_size=self._batch_size)
 
     def _init_holder(self):
         self._lr_labels_holder = tf.placeholder(name='lr_labels', shape=(None, self._num_steps, 2), dtype=tf.float32)

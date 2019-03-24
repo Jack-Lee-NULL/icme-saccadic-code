@@ -16,7 +16,8 @@ class DResConvLSTM:
 
     def __init__(self, filter_size=(3, 3, 3, 3), inputs_channel=(2048, 64), shape=(48, 64, 16, 16),
             c_h_channel=(1, 1, 1, 1), forget_bias=(1.0, 1.0),
-            activation=(tf.nn.tanh, tf.nn.tanh), num_steps=8):
+            activation=(tf.nn.tanh, tf.nn.tanh), num_steps=8,
+            batch_size=10):
         """Intialize double resolution conv-lstm model. lr(low resolution),
         hr(high resolution)
         Args:
@@ -34,6 +35,7 @@ class DResConvLSTM:
            of lr and hr
            -num_steps: int, the number of cells
         """
+        self._batch_size = batch_size
         self._num_steps = num_steps
         self._filter_size = filter_size
         self._shape = shape
@@ -52,7 +54,8 @@ class DResConvLSTM:
                 shape_hr=(self._shape[2], self._shape[3]),
                 c_h_channel=self._c_h_channel,
                 forget_bias=self._forget_bias,
-                activation=self._activation)
+                activation=self._activation,
+                batch_size=self._batch_size)
 
     def _init_holder(self):
         self.lr_c_init = tf.placeholder(tf.float32,
@@ -89,12 +92,14 @@ class DResConvLSTM:
             scope = 'DRes_Conv_LSTM' #+ str(i)
             if i == 0:
                 lr_c = self.lr_c_init
-                lr_h = self.lr_h_init
+                #lr_h = self.lr_h_init
+                lr_h = tf.nn.l2_normalize(self.lr_h_init, axis=[1, 2, 3])
                 hr_c = self.hr_c_init
-                hr_h = self.hr_h_init
+                #hr_h = self.hr_h_init
+                hr_h = tf.nn.l2_normalize(self.hr_h_init, axis=[1, 2, 3])
                 state = (lr_c, lr_h, hr_c, hr_h)
             inputs = (self.lr_inputs[:, :, :, :],
-                    self.hr_inputs[:, i, :, :, :])
+                    self.hr_inputs[:, :, :, :, :])
             state, lr_pred, hr_pred = self._cell(
                     state=state, inputs=inputs, scope=scope)
             lr_preds.append(lr_pred)

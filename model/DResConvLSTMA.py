@@ -22,6 +22,7 @@ class DResConvLSTMA(DResConvLSTM):
                 shape_hr=(self._shape[2], self._shape[3]),
                 c_h_channel=self._c_h_channel,
                 forget_bias=self._forget_bias,
-                activation=self._activation)
+                activation=self._activation,
+                batch_size=self._batch_size)
 
 

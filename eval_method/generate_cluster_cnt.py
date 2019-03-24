@@ -32,6 +32,7 @@ def generate_cluster_cnt(gt_scanpath, bw):
         img_fix = np.concatenate(img_fix, axis=0)
         img_fix = img_fix[:, 0: 2]
         #bw = estimate_bandwidth(img_fix, quantile=0.05, n_samples=100)
+        print(img_fix.shape)
         cnt_bw = []
         scores = []
         for b in bw:
@@ -47,11 +48,11 @@ def generate_cluster_cnt(gt_scanpath, bw):
     return cluster_cnt, bandwidth
 
 if __name__ == '__main__':
-    GT_SCANPATH_PATH = os.path.join(DATA_DIR, 'ASD_768_1024_scanpath.npy')
-    OUTPUT_SCANPATH_CNT_PATH = os.path.join(DATA_DIR, 'ASD_gt_test_768_1024_ms_cnt_for_eval.mat')
+    GT_SCANPATH_PATH = os.path.join(DATA_DIR, 'TD_768_1024_scanpath.npy')
+    OUTPUT_SCANPATH_CNT_PATH = os.path.join('TD_gt_test_768_1024_ms_cnt_for_eval.mat')
     
     gt_scanpath = np.load(GT_SCANPATH_PATH)
-    bws = np.array(range(50, 105, 5))
+    bws = np.array(range(40, 105, 5))
     cluster_cnt, bandwidth = generate_cluster_cnt(gt_scanpath[0: 10], bws)
     print(np.shape(cluster_cnt))
     print(np.shape(bandwidth))

@@ -16,7 +16,7 @@ class DResConvLSTMCell:
 
     def __init__(self, filter_size_lr, filter_size_hr, shape_lr=(48, 64),
             shape_hr=(16, 16), c_h_channel=(1, 1), forget_bias=(1.0, 1.0),
-            activation=(tf.nn.tanh, tf.nn.tanh)):
+            activation=(tf.nn.tanh, tf.nn.tanh), batch_size=10):
         """Intialize double resolution conv-lstm cell. lr(low resolution),
         hr(high resolution)
         Args:
@@ -33,6 +33,7 @@ class DResConvLSTMCell:
            -activation: a tuple, Activation function of the inner states
            of lr and hr
         """
+        self._batch_size = batch_size
         self._shape_lr = shape_lr
         self._shape_hr = shape_hr
         self._filter_size_lr = filter_size_lr
@@ -76,7 +77,10 @@ class DResConvLSTMCell:
                 ksize=(1, self._pool_ksize[0], self._pool_ksize[1], 1),
                 strides=self._pool_strides, padding='SAME')
         region_idx = self._get_region_id(lr_preds[:, 0, :])
-        hr_input = tf.concat([hr_inputs, hr_input_c], axis=3)
+        hr_input = []
+        for i in range(self._batch_size):
+            hr_input.append(hr_inputs[i, region_idx[i], :, :, :])
+        hr_input = tf.concat([hr_input, hr_input_c], axis=3)
         hr_state, hr_preds = self._run_hr_cell(
                 state=(state[2], state[3]), inputs=hr_input,
                 keep_prob=keep_prob, scope=scope)
@@ -87,6 +91,8 @@ class DResConvLSTMCell:
         x = tf.round(coord[:, 0] * self._shape_lr[1])
         y = tf.round(coord[:, 1] * self._shape_lr[0])
         idx = y * self._shape_lr[1] + x
+        idx = tf.cast(idx, tf.int32)
+        idx = tf.clip_by_value(idx, 0, self._shape_lr[1]*self._shape_hr[0]-1)
         return idx
 
     def _run_lr_cell(self, state, inputs, keep_prob, scope='DR_CONV_LSTM'):
