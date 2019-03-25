@@ -13,24 +13,29 @@ from model.ModifiedConvLSTMCellA import ModifiedConvLSTMCellA
 class ModifiedConvLSTMCellB(ModifiedConvLSTMCellA):
 
     
-    def __call__(self, inputs, state, scope="MConvLSTMB", bias_start=0.0):
+    def __call__(self, inputs, state, scope="MConvLSTMB", bias_start=1.0):
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
            c, h = state
            matrix1 = tf.get_variable(
                    'Matrix1', [self._filter_size[0], self._filter_size[1],
-                   self._h_depth, 1], dtype=tf.float32)
+                   self._h_depth, 1], dtype=tf.float32, 
+                   initializer=tf.orthogonal_initializer())
            matrix2 = tf.get_variable(
                    'Matrix2', [self._filter_size[0], self._filter_size[1],
-                   self._h_depth, 1], dtype=tf.float32)
+                   self._h_depth, 1], dtype=tf.float32,
+                   initializer=tf.orthogonal_initializer())
            matrix3 = tf.get_variable(
                    'Matrix3', [self._filter_size[0], self._filter_size[1],
-                   inputs.shape[3], self._num_features], dtype=tf.float32)
+                   inputs.shape[3], self._num_features], dtype=tf.float32,
+                   initializer=tf.orthogonal_initializer())
            matrix4 = tf.get_variable(
                    'Matrix4', [self._filter_size[0], self._filter_size[1],
-                   inputs.shape[3], self._num_features], dtype=tf.float32)
+                   inputs.shape[3], self._num_features], dtype=tf.float32,
+                   initializer=tf.orthogonal_initializer())
            matrix5 = tf.get_variable(
                    'Matrix5', [self._filter_size[0], self._filter_size[1],
-                   2*self._num_features, self._h_depth], dtype=tf.float32)
+                   2*self._num_features, self._h_depth], dtype=tf.float32,
+                   initializer=tf.orthogonal_initializer())
            bias1 = tf.get_variable(
                    'Bias1', [1], dtype=tf.float32,
                    initializer=tf.constant_initializer(bias_start, dtype=tf.float32))
@@ -52,7 +57,7 @@ class ModifiedConvLSTMCellB(ModifiedConvLSTMCellA):
            region = tf.sigmoid(region + bias2)
            update_gate = tf.nn.conv2d(region * inputs, matrix3, strides=[1, 1, 1, 1],
                    padding='SAME')
-           update_gate = tf.sigmoid(update_gate + bias3)
+           update_gate = tf.tanh(update_gate + bias3)
            origin_feature = tf.nn.conv2d(inputs, matrix3, strides=[1, 1, 1, 1], padding='SAME')
            origin_feature = tf.sigmoid(origin_feature + bias4)
            new_c = c  + update_gate
