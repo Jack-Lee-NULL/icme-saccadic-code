@@ -101,8 +101,9 @@ class DResConvLSTMCell:
         lr_h_flatten = tf.layers.flatten(lr_h)
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             w = tf.get_variable('lr_ouput_w', shape=(lr_h_flatten.shape[1], 2),
-                    dtype=tf.float32)
-            b = tf.get_variable('lr_output_b', shape=(1, 2), dtype=tf.float32)
+                    dtype=tf.float32, initializer=tf.truncated_normal_initializer())
+            b = tf.get_variable('lr_output_b', shape=(1, 2), dtype=tf.float32,
+                    initializer=tf.constant_initializer(1))
         lr_preds = tf.matmul(lr_h_flatten, w) + b
         lr_preds = tf.expand_dims(lr_preds, axis=1)
         lr_preds = tf.nn.relu(lr_preds)
@@ -116,8 +117,9 @@ class DResConvLSTMCell:
         hr_h_flatten = tf.layers.flatten(hr_h)
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             w = tf.get_variable('hr_output_w', shape=(hr_h_flatten.shape[1], 2),
-                    dtype = tf.float32)
-            b = tf.get_variable('hr_output_b', shape=(1, 2), dtype=tf.float32)
+                    dtype = tf.float32, initializer=tf.truncated_normal_initializer())
+            b = tf.get_variable('hr_output_b', shape=(1, 2), dtype=tf.float32,
+                    initializer=tf.constant_initializer(1))
         hr_preds = tf.matmul(hr_h_flatten, w) + b
         hr_preds = tf.expand_dims(hr_preds, axis=1)
         hr_preds = tf.nn.relu(hr_preds)       
