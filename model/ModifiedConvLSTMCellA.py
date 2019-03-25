@@ -12,7 +12,7 @@ class ModifiedConvLSTMCellA:
     """Modified Conv-LSTM cell.
     """
 
-    def __init__(self, shape, filter_size, num_features, h_depth=1):
+    def __init__(self, shape, filter_size, num_features, h_depth=1, bias_start=0.0):
         """Initialize Modified Conv-LSTM cell.
         Args:
             -shape: a tuple of int, the height and width of the inputs,
@@ -25,8 +25,9 @@ class ModifiedConvLSTMCellA:
         self._filter_size = filter_size
         self._num_features = num_features
         self._h_depth = h_depth
+        self._bias_start=bias_start
 
-    def __call__(self, inputs, state, scope="MConvLSTM", bias_start=0.0):
+    def __call__(self, inputs, state, scope="MConvLSTM"):
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
            c, h = state
            f = tf.multiply(h, inputs)
@@ -42,13 +43,13 @@ class ModifiedConvLSTMCellA:
                    2 * self._num_features, self._h_depth], dtype=tf.float32)
            bias1 = tf.get_variable(
                    'Bias1', [self._num_features], dtype=tf.float32,
-                   initializer=tf.constant_initializer(bias_start, dtype=tf.float32))
+                   initializer=tf.constant_initializer(self._bias_start, dtype=tf.float32))
            bias2 = tf.get_variable(
                    'Bias2', [self._num_features], dtype=tf.float32,
-                   initializer=tf.constant_initializer(bias_start, dtype=tf.float32))
+                   initializer=tf.constant_initializer(self._bias_start, dtype=tf.float32))
            bias3 = tf.get_variable(
                    'Bias3', [self._h_depth], dtype=tf.float32,
-                   initializer=tf.constant_initializer(bias_start, dtype=tf.float32))
+                   initializer=tf.constant_initializer(self._bias_start, dtype=tf.float32))
         
            res1 = tf.nn.conv2d(f, matrix1, strides=[1, 1, 1, 1], padding='SAME')
            res2 = tf.nn.conv2d(f, matrix2, strides=[1, 1, 1, 1], padding='SAME')
