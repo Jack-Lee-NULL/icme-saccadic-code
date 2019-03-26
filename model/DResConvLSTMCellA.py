@@ -22,6 +22,6 @@ class DResConvLSTMCellA(DResConvLSTMCell):
         self._hr_cell = ModifiedConvLSTMCellA(shape=self._shape_hr,
                 filter_size=self._filter_size_hr,
                 num_features=self._c_h_channel[2],
-                bias_start=sel._forget_bias[1])
+                bias_start=self._forget_bias[1])
 
 
