@@ -82,6 +82,7 @@ class TrainModeA:
             summary_writer = tf.summary.FileWriter(self._log_path, graph=tf.get_default_graph())
             saver = tf.train.Saver(max_to_keep=20)
             if self._pretrained_model != None:
+                print('loading pretrained model:', self._pretrained_model)
                 saver.restore(sess, self._pretrained_model)
             print('The number of epochs:', self._epochs)
             print('Training data size:', np.shape(train_idxs)[0])
