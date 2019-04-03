@@ -170,13 +170,13 @@ def postprocess_predictions(pred, shape_r, shape_c):
 
 if __name__ == '__main__':
     ORIGIN_RESOLUTION_IMG_SET = 'imgs.npy'
-    OUTPUT_IMG_SET = 'imgs_768_1024.npy'
+    OUTPUT_IMG_SET = 'imgs_48_64.npy'
     SCANPATH_FILE = 'TD_origin_scanpath.npy'
     OUTPUT_SCANPATH_FILE = 'TD_48_64_normalized_scanpath.npy'
     CHANNELS = 3
     NUM_STEPS = 10
     NORMALIZATION = True
-    SAVE_IMG_SET = False
+    SAVE_IMG_SET = True
 
     TO_ROW = 48
     TO_COL = 64
@@ -214,6 +214,6 @@ if __name__ == '__main__':
         i += 1
     coord = np.array(coord)
     output_img_set = np.array(output_img_set)
-    np.save(os.path.join(DATA_DIR, OUTPUT_SCANPATH_FILE), coord)
+    #np.save(os.path.join(DATA_DIR, OUTPUT_SCANPATH_FILE), coord)
     if SAVE_IMG_SET:
         np.save(os.path.join(DATA_DIR, OUTPUT_IMG_SET), output_img_set)

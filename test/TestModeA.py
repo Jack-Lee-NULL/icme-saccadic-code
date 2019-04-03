@@ -60,7 +60,7 @@ class TestModeA:
                 feed_dict = self._generate_feed_dict(idxs)
                 pred = sess.run(predictor, feed_dict)
                 preds.append(pred)               
-        preds = np.concatenate(preds, axis=0)
+        preds = np.concatenate(preds, axis=1)
         preds = self._decode_preds(preds)
         np.save(self._preds_path, preds)
         print ("Predictions have been saved to", self._preds_path)

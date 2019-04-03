@@ -59,7 +59,7 @@ class TrainModeA:
 
         predicts = self._preds()
         loss = self._compute_loss()
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=self._learning_rate)
+        optimizer = tf.train.AdamOptimizer(learning_rate=self._learning_rate)
         train_op = optimizer.minimize(loss)
 
         num_validation_idxs = np.shape(np.argwhere(self._idxs[:, 0] < self._num_validation))[0]
@@ -82,6 +82,7 @@ class TrainModeA:
             summary_writer = tf.summary.FileWriter(self._log_path, graph=tf.get_default_graph())
             saver = tf.train.Saver(max_to_keep=20)
             if self._pretrained_model != None:
+                print('loading pretrained model:', self._pretrained_model)
                 saver.restore(sess, self._pretrained_model)
             print('The number of epochs:', self._epochs)
             print('Training data size:', np.shape(train_idxs)[0])

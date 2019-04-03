@@ -34,16 +34,30 @@ class BasicSaccadicModel:
                 num_features=c_h_channel, forget_bias=forget_bias,
                 activation=activation, state_is_tuple=True))
         """
-        self._cell = BasicConvLSTMCell(shape, filter_size,
-                num_features=c_h_channel, forget_bias=forget_bias,
-                activation=activation, state_is_tuple=True)
+        self._shape = shape
+        self._filter_size = filter_size
+        self._c_h_channel = c_h_channel
+        self._forget_bias = forget_bias
+        self._activation = activation
         self._num_steps = num_steps
+        self._inputs_channel = inputs_channel
+        self._init_cell()
+        self._init_holder()
+
+
+    def _init_cell(self):
+        self._cell = BasicConvLSTMCell(self._shape, self._filter_size,
+                num_features=self._c_h_channel,
+                forget_bias=self._forget_bias,
+                activation=self._activation, state_is_tuple=True)
+
+    def _init_holder(self):
         self._c_init = tf.placeholder(tf.float32, 
-                (None, shape[0], shape[1], c_h_channel), name='c_init')
+                (None, self._shape[0], self._shape[1], self._c_h_channel), name='c_init')
         self._h_init = tf.placeholder(tf.float32, 
-                (None, shape[0], shape[1], c_h_channel), name='h_init')
+                (None, self._shape[0], self._shape[1], self._c_h_channel), name='h_init')
         self._inputs = tf.placeholder(tf.float32, 
-                (None, shape[0], shape[1], inputs_channel), name='inputs')
+                (None, self._shape[0], self._shape[1], self._inputs_channel), name='inputs')
 
     @property
     def c_init(self):
