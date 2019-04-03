@@ -59,7 +59,7 @@ class TrainModeA:
 
         predicts = self._preds()
         loss = self._compute_loss()
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=self._learning_rate)
+        optimizer = tf.train.AdamOptimizer(learning_rate=self._learning_rate)
         train_op = optimizer.minimize(loss)
 
         num_validation_idxs = np.shape(np.argwhere(self._idxs[:, 0] < self._num_validation))[0]
