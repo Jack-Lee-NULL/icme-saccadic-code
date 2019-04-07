@@ -20,7 +20,8 @@ class TrainModeA:
                  print_every=1, save_every=1, log_path=None, filter_size=(3, 3),
                  inputs_channel=64, c_h_channel=1, forget_bias=1.0, init_hidden=None,
                  save_model_path=None, pretrained_model=None, feature_dir=None,
-                 scanpath=None, idxs=None, num_steps=8, num_validation=None):
+                 scanpath=None, idxs=None, num_steps=8, num_validation=None,
+                 output_path=None):
         self._learning_rate = learning_rate
         self._epochs = epochs
         self._batch_size = batch_size
@@ -40,6 +41,7 @@ class TrainModeA:
         self._filter_size = filter_size
         self._inputs_channel = inputs_channel
         self._forget_bias = forget_bias
+        self._output_path = output_path
 
         self._init_model()
         self._init_holder()       
@@ -56,15 +58,10 @@ class TrainModeA:
                 dtype=tf.float32)
 
     def train(self):
-
         predicts = self._preds()
         loss = self._compute_loss()
         optimizer = tf.train.AdamOptimizer(learning_rate=self._learning_rate)
         train_op = optimizer.minimize(loss)
-
-        num_validation_idxs = np.shape(np.argwhere(self._idxs[:, 0] < self._num_validation))[0]
-        validation_idxs = self._idxs[0: num_validation_idxs, :]
-        train_idxs = self._idxs[num_validation_idxs: np.shape(self._idxs)[0], :]
 
         batch_loss = tf.summary.scalar('batch_loss', loss)
         validation_loss = tf.summary.scalar('validation_loss', loss)
@@ -92,7 +89,14 @@ class TrainModeA:
             print('Print every', self._print_every, 'epochs')
             print('Save model to', self._save_model_path, 'every',
                 self._save_every, 'epochs')
+            num_validation_idxs = 0
             for i in range(self._epochs):
+                pre_num_validation = num_validation_idxs
+                num_validation_idxs = np.shape(np.argwhere(self._idxs[:, 0] < (i+1)*self._num_validation))[0]
+                validation_idxs = self._idxs[pre_num_validation: num_validation_idxs, :]
+                train_idxs = [self._idxs[num_validation_idxs: np.shape(self._idxs)[0], :],
+                        self._idxs[0: pre_num_validation, :]]
+                train_idxs = np.concatenat(train_idxs, idxs=0)
                 np.random.shuffle(train_idxs)
                 for j in range(n_iter_per_epochs):
                     idxs = train_idxs[j * self._batch_size: (j + 1) * self._batch_size, :]
@@ -117,11 +121,18 @@ class TrainModeA:
                     print("Elapsed time:", time.time() - start_t)
                     prev_loss = current_loss
                     current_loss = 0.0
-                    predictions = sess.run(predicts, feed_dict)
+                    predictions = []
+                    for k in range((num_validation_idxs-pre_num_validation) // self._batch_size):
+                        idxs = validation_idxs[k * self._batch_size: (k+1) * self._batch_size, :]
+                        feed_dict = self._generate_feed_dict(idxs)
+                        predictions.append(sess.run(predicts, feed_dict))
+                    predictions = np.concatenate(predictions, axis=0)
                     predictions = self._decode_predicts(predictions)
+                    if self._output_path != None:
+                        np.save(os.path.join(self._output_path, str(i)+'.npy'), predictions)
                     labels = feed_dict[self._labels_holder]
                     labels = self._decode_predicts(labels)
-                    print(predictions)
+                    print(predictions[-self._batch_size: predictions.shape[0], :, :])
                     print(labels)
                     start_t = time.time()
                 
