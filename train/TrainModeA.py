@@ -66,8 +66,6 @@ class TrainModeA:
         batch_loss = tf.summary.scalar('batch_loss', loss)
         validation_loss = tf.summary.scalar('validation_loss', loss)
 
-        n_iter_per_epochs = np.shape(train_idxs)[0] // self._batch_size
-        
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
 
@@ -81,10 +79,10 @@ class TrainModeA:
             if self._pretrained_model != None:
                 print('loading pretrained model:', self._pretrained_model)
                 saver.restore(sess, self._pretrained_model)
+            print('Learning rate:', self._learning_rate)
+            print('Batch size:', self._batch_size)
             print('The number of epochs:', self._epochs)
-            print('Training data size:', np.shape(train_idxs)[0])
-            print('Validating data size:', np.shape(validation_idxs)[0])
-            print('Iterations per epoch:', n_iter_per_epochs)
+            print('The number of validating images :', self._num_validation)
             print('Log path:', self._log_path)
             print('Print every', self._print_every, 'epochs')
             print('Save model to', self._save_model_path, 'every',
@@ -96,7 +94,8 @@ class TrainModeA:
                 validation_idxs = self._idxs[pre_num_validation: num_validation_idxs, :]
                 train_idxs = [self._idxs[num_validation_idxs: np.shape(self._idxs)[0], :],
                         self._idxs[0: pre_num_validation, :]]
-                train_idxs = np.concatenat(train_idxs, idxs=0)
+                train_idxs = np.concatenate(train_idxs, axis=0)
+                n_iter_per_epochs = np.shape(train_idxs)[0] // self._batch_size
                 np.random.shuffle(train_idxs)
                 for j in range(n_iter_per_epochs):
                     idxs = train_idxs[j * self._batch_size: (j + 1) * self._batch_size, :]
