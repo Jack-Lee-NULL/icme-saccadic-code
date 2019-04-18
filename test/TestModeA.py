@@ -45,7 +45,7 @@ class TestModeA:
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
         n_iters = np.shape(self._idxs)[0] // self._batch_size
-        predictor = self._predictor()
+        predictor = self._predictor(mode='test')
         with tf.Session(config=config) as sess:
             saver = tf.train.Saver()
             saver.restore(sess, self._trained_model)

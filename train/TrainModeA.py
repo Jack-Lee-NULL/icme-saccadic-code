@@ -58,7 +58,7 @@ class TrainModeA:
                 dtype=tf.float32)
 
     def train(self):
-        predicts = self._preds()
+        predicts = self._preds(mode='test')
         loss = self._compute_loss()
         optimizer = tf.train.AdamOptimizer(learning_rate=self._learning_rate)
         train_op = optimizer.minimize(loss)
@@ -121,17 +121,22 @@ class TrainModeA:
                     prev_loss = current_loss
                     current_loss = 0.0
                     predictions = []
-                    for k in range((num_validation_idxs-pre_num_validation) // self._batch_size):
-                        idxs = validation_idxs[k * self._batch_size: (k+1) * self._batch_size, :]
+                    print('generate validation result')
+                    for k in range(self._batch_size):
+                        idxs = validation_idxs[k: k+1, :]
                         feed_dict = self._generate_feed_dict(idxs)
-                        predictions.append(sess.run(predicts, feed_dict))
+                        preds = sess.run(predicts, feed_dict)
+                        if self._output_path != None:
+                            np.save(self._output_path, preds[2])
+                            np.save('./c_img.npy', preds[1])
+                            np.save('./preds_img.npy', preds[0])
+                        preds = self._decode_predicts(preds[0])
+                        predictions.append(preds)
                     predictions = np.concatenate(predictions, axis=0)
-                    predictions = self._decode_predicts(predictions)
-                    if self._output_path != None:
-                        np.save(os.path.join(self._output_path, str(i)+'.npy'), predictions)
+                    print('generate labels')
                     labels = feed_dict[self._labels_holder]
                     labels = self._decode_predicts(labels)
-                    print(predictions[-self._batch_size: predictions.shape[0], :, :])
+                    print(predictions[-self._batch_size: np.shape(predictions)[0], :])
                     print(labels)
                     start_t = time.time()
                 
@@ -143,7 +148,7 @@ class TrainModeA:
         return predicts
         
     def _compute_loss(self):
-        preds = self._preds() 
+        preds = self._preds(mode='train') 
         labels = self._labels_holder
         loss = 0.0
         weight = labels > 0

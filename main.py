@@ -54,6 +54,7 @@ class Main:
         self.idxs_path = self._config.get(self._section, 'idxs_path')
         self.num_steps = self._config.getint(self._section, 'num_steps', fallback=8)
         self.num_validation = self._config.getint(self._section, 'num_validation', fallback=10)
+        self.output_path = self._config.get(self._section, 'output_path', fallback=None)
 
         self.trained_model = self._config.get(self._section, 'trained_model', fallback=None)
         self.test_feature_dir = self._config.get(self._section, 'test_feature_dir', fallback=None)
@@ -86,10 +87,11 @@ class Main:
         self.forget_bias = (forget_bias_lr, forget_bias_hr)
         scanpath_path_lr = self._config.get(self._section, 'scanpath_path_lr', fallback=None)
         scanpath_path_hr = self._config.get(self._section, 'scanpath_path_hr', fallback=None)
-        if scanpath_path_hr != None and scanpath_path_lr != None:
-            self.scanpath = (np.load(scanpath_path_lr), np.load(scanpath_path_hr))
-        else:
-            self.scanpath = None
+        if self.scanpath_path == None:
+            if scanpath_path_hr != None and scanpath_path_lr != None:
+                self.scanpath = (np.load(scanpath_path_lr), np.load(scanpath_path_hr))
+            else:
+                self.scanpath = None
         if self.feature_dir == None:
             feature_dir_lr = self._config.get(self._section, 'feature_dir_lr')
             feature_dir_hr = self._config.get(self._section, 'feature_dir_hr')
@@ -126,7 +128,7 @@ class Main:
                 filter_size=self.filter_size, inputs_channel=self.inputs_channel,
                 c_h_channel=self.c_h_channel, forget_bias=self.forget_bias,
                 num_steps=self.num_steps,
-                idxs=idxs, batch_size=self.batch_size, preds_path=self.preds_path)       
+                idxs=idxs, batch_size=self.batch_size, preds_path=self.preds_path)
         predictor.predicts()
 
     def _test_E(self):
@@ -215,7 +217,8 @@ class Main:
                 forget_bias=self.forget_bias, save_model_path=self.save_model_path,
                 pretrained_model=self.pretrained_model, feature_dir=self.feature_dir,
                 scanpath=self.scanpath, idxs=self.idxs, num_steps=self.num_steps, 
-                num_validation=self.num_validation)
+                num_validation=self.num_validation,
+                output_path=self.output_path)
         train.train()
 
     def _train_E(self):
@@ -232,6 +235,7 @@ class Main:
 
     def _train_F(self):
         self._read_B_data()
+        self.scanpath = np.load(self.scanpath_path)
         train = TrainModeF.TrainModeF(learning_rate=self.learning_rate, epochs=self.epochs,
                 batch_size=self.batch_size, shape=self.shape, print_every=self.print_every,
                 save_every=self.save_every, log_path=self.log_path, filter_size=self.filter_size,
@@ -239,7 +243,7 @@ class Main:
                 forget_bias=self.forget_bias, save_model_path=self.save_model_path,
                 pretrained_model=self.pretrained_model, feature_dir=self.feature_dir,
                 scanpath=self.scanpath, idxs=self.idxs, num_steps=self.num_steps, 
-                num_validation=self.num_validation)
+                num_validation=self.num_validation, output_path=self.output_path)
         train.train()
 
     def run(self):
@@ -249,7 +253,7 @@ class Main:
             self._test_modes[self._test_mode]()
 
 if __name__ == '__main__':
-    os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     if len(sys.argv) != 3:
         raise TypeError('required 2 parameters,', len(sys.argv), 'given')
     if sys.argv[2] != 'train' and sys.argv[2] != 'test':
