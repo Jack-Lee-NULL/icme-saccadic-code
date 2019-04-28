@@ -135,6 +135,7 @@ class TrainModeA:
                     predictions = np.concatenate(predictions, axis=0)
                     print('generate labels')
                     labels = feed_dict[self._labels_holder]
+                    np.save('./labels_img.npy', labels)
                     labels = self._decode_predicts(labels)
                     print(predictions[-self._batch_size: np.shape(predictions)[0], :])
                     print(labels)
@@ -148,7 +149,7 @@ class TrainModeA:
         return predicts
         
     def _compute_loss(self):
-        preds = self._preds(mode='train') 
+        preds = self._preds(mode='train')
         labels = self._labels_holder
         loss = 0.0
         weight = labels > 0

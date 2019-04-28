@@ -25,7 +25,7 @@ class Main:
         self._config.read('config.ini')
         self._train_modes = {'A': self._train_A, 'B': self._train_B,
                 'C': self._train_C, 'D': self._train_D, 'E': self._train_E,
-                'F': self._train_F}
+                'F': self._train_F, 'G': self._train_G}
         self._test_modes = {'A': self._test_A, 'B': self._test_B,
                 'D': self._test_D, 'E':self._test_E, 'F': self._test_F}
         self._train_mode = self._config.get(self._section, 'train_mode', fallback='A')
@@ -237,6 +237,19 @@ class Main:
         self._read_B_data()
         self.scanpath = np.load(self.scanpath_path)
         train = TrainModeF.TrainModeF(learning_rate=self.learning_rate, epochs=self.epochs,
+                batch_size=self.batch_size, shape=self.shape, print_every=self.print_every,
+                save_every=self.save_every, log_path=self.log_path, filter_size=self.filter_size,
+                inputs_channel=self.inputs_channel, c_h_channel=self.c_h_channel,
+                forget_bias=self.forget_bias, save_model_path=self.save_model_path,
+                pretrained_model=self.pretrained_model, feature_dir=self.feature_dir,
+                scanpath=self.scanpath, idxs=self.idxs, num_steps=self.num_steps, 
+                num_validation=self.num_validation, output_path=self.output_path)
+        train.train()
+
+    def _train_G(self):
+        self._read_B_data()
+        self.scanpath = np.load(self.scanpath_path)
+        train = TrainModeG.TrainModeG(learning_rate=self.learning_rate, epochs=self.epochs,
                 batch_size=self.batch_size, shape=self.shape, print_every=self.print_every,
                 save_every=self.save_every, log_path=self.log_path, filter_size=self.filter_size,
                 inputs_channel=self.inputs_channel, c_h_channel=self.c_h_channel,

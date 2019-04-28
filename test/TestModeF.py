@@ -10,18 +10,23 @@ import os
 import numpy as np
 import cv2
 import tensorflow as tf
+import keras.backend as K
+from keras_applications.imagenet_utils import preprocess_input
 
 from test.TestModeA import TestModeA
-from model.SingleConvLSTMB4Test import SingleConvLSTMB4Test
+from ResNet50.resnet_part import ResNet50
+from model.SingleConvLSTMC import SingleConvLSTMC
 
 class TestModeF(TestModeA):
 
     def _init_model(self):
         self._feature_dir = self._feature_dir.split('\n')
-        self._predictor = SingleConvLSTMB4Test(filter_size=self._filter_size,
+        self._predictor = SingleConvLSTMC(filter_size=self._filter_size,
+                batch_size=self._batch_size,
                 inputs_channel=self._inputs_channel, shape=self._shape,
                 c_h_channel=self._c_h_channel, forget_bias=self._forget_bias,
-                num_steps=self._num_steps)
+                num_steps=1)
+        self._resnet = ResNet50(include_top=False)
 
     def _decode_preds(self, predicts):
         scanpath = []
@@ -48,7 +53,7 @@ class TestModeF(TestModeA):
         return init
 
     def __get_o(self, shape, o_pre, o, kernel_size):
-        o_pre = np.array(o_pre)
+        o_pre = np.array(o_pre[0, :, :, :, :])
         init = np.zeros(shape)
         coord = np.argmax(o)
         coord_y = coord // self._shape[1]
@@ -64,18 +69,33 @@ class TestModeF(TestModeA):
         return init   
 
     def _generate_feed_dict(self, idxs):
-        features = []
+        features_lr = []
+        features_hr = []
         for idx in idxs:
             feature = np.load(os.path.join(self._feature_dir[0], str(idx[0])+'.npy'))
-            features.append(feature)
+            features_lr.append(feature)
+            feature = np.load(os.path.join(self._feature_dir[1], str(idx[0])+'.npy'))
+            features_hr.append(feature)
+        features_lr = np.array(features_lr)
+        features_hr = np.array(features_hr)
+        o_init = np.array([self._o_init])
+        features = []
+        for  i in range(self._batch_size):
+            f_lr = features_lr[i, np.newaxis, :, :, :] * (1 - o_init[i, :, :, :, :])
+            f_hr = features_hr[i, np.newaxis, :, :, :] * o_init[i, :, :, :, :]
+            f = f_lr + f_hr
+            f = preprocess_input(f[:, :, :, :], backend=K)
+            f_out = []
+            f_out.append(np.array(self._resnet.predict(f[0: 1, :, :, :]))[0, :, :, :])
+            features.append(f_out)
         features = np.array(features)
-        scanpaths = []
-        o_init = []
+        """
         for idx in idxs:
             o_init.append(self.__get_h_init((self._shape[0], self._shape[1]),
-                    coord=(0.5, 0.5), kernel_size=30))
-        c_init = np.zeros((np.shape(idxs)[0], self._shape[0], self._shape[1], self._c_h_channel[0]))
-        h_init = np.zeros((np.shape(idxs)[0], self._shape[0], self._shape[1], self._c_h_channel[1]))
+                    coord=(0.5, 0.5), kernel_size=150))
+        """
+        c_init = np.zeros((np.shape(idxs)[0], self._shape[2], self._shape[3], self._c_h_channel[0]))
+        h_init = np.zeros((np.shape(idxs)[0], self._shape[2], self._shape[3], self._c_h_channel[1]))
         feed_dict = {self._predictor.c_init: c_init, self._predictor.h_init: h_init,
                 self._predictor._inputs: features, self._predictor.o_init: o_init}
         return feed_dict
@@ -84,21 +104,25 @@ class TestModeF(TestModeA):
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
         n_iters = np.shape(self._idxs)[0]
-        predictor = self._predictor()
+        predictor = self._predictor(mode='test')
         with tf.Session(config=config) as sess:
             saver = tf.train.Saver()
             saver.restore(sess, self._trained_model)
             preds = []
             for i in range(n_iters):
                 idxs = self._idxs[i : i + 1, :]
+                self._o_init = [self.__get_h_init((self._shape[0], self._shape[1]),
+                    coord=(0.5, 0.5), kernel_size=355)]
                 feed_dict = self._generate_feed_dict(idxs)
                 pred = []
                 for _ in range(self._num_steps):
-                    c, h, o = sess.run(predictor, feed_dict)
-                    pred.append(np.expand_dims(o, axis=1))
-                    o = self.__get_o((self._shape[0], self._shape[1]), feed_dict[self._predictor.o_init], o, 30)
-                    feed_dict = {self._predictor.c_init: c, self._predictor.h_init: h,
-                            self._predictor._inputs: feed_dict[self._predictor._inputs], self._predictor.o_init: o}
+                    o, c, h = sess.run(predictor, feed_dict)
+                    pred.append(o)
+                    o = self.__get_o((self._shape[0], self._shape[1]), feed_dict[self._predictor.o_init], o, 355)
+                    self._o_init = o
+                    feed_dict = self._generate_feed_dict(idxs)
+                    feed_dict[self._predictor.c_init] = c
+                    feed_dict[self._predictor.h_init] = h
                 pred = np.concatenate(pred, axis=1)
                 preds.append(pred)
         preds = np.concatenate(preds, axis=0)
