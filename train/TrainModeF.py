@@ -33,6 +33,9 @@ class TrainModeF(TrainModeB):
         self._labels_holder = tf.placeholder(name='labels', 
                 shape=(None, self._num_steps, self._shape[0], self._shape[1], 1),
                 dtype=tf.float32)
+        self._resconstruct_weight_holder = tf.placeholder(name='res_weight',
+                shape=(None, self._num_steps, self._shape[0], self._shape[1], 1),
+                dtype=tf.float32)
 
     def _compute_loss(self):
         preds_pack = self._preds(mode='train')
@@ -46,12 +49,13 @@ class TrainModeF(TrainModeB):
         num = (tf.reduce_sum(num)+1)
         loss = tf.reduce_sum(loss)
         loss = loss / self._batch_size / num
-        reconstruct = preds_pack[1]
+        reconstruct = preds_pack[3]
+        weight = self._resconstruct_weight_holder
         re_loss = 0.0
         for i in range(self._num_steps):
-            re_loss += tf.losses.mean_squared_error(labels=self._preds._inputs[2], 
-                    predictions=reconstruct[:, i, :, :, :])
-        loss = 0.8 * loss + 0.2 * re_loss
+            re_loss += tf.losses.mean_squared_error(labels=self._preds._inputs[2]*weight[:, i, :, :, :], 
+                    predictions=reconstruct[:, i, :, :, :]) 
+        loss = 0.6 * loss + 0.4 * re_loss
         return loss
 
     def _decode_predicts(self, predicts):
@@ -94,21 +98,26 @@ class TrainModeF(TrainModeB):
         blur_img = np.array(blur_img)
 
         scanpaths = []
+        reconstruct_weight = []
         o_init = []
         for idx in idxs:
             s = np.load(os.path.join(self._feature_dir[2], str(idx[0])+'.npy'))
             s = s[idx[1]][0: self._num_steps, :, :, np.newaxis]
             s_t = []
             for i in range(self._num_steps):
-                s_t.append(cv2.resize(s[i, :, :, :], (self._shape[3], self._shape[2]))[:, :, np.newaxis])
+                a = cv2.resize(s[i, :, :, :], (self._shape[3], self._shape[2]))[:, :, np.newaxis]
+                s_t.append((a > 0).astype('float32'))
             o_init.append(s_t)
             s = np.load(os.path.join(self._feature_dir[2], str(idx[0])+'.npy'))
             scanpaths.append(s[idx[1]][1: self._num_steps+1, :, :, np.newaxis])
+            reconstruct_weight.append(s[idx[1]][0: self._num_steps, :, :, np.newaxis])
         o_init = np.array(o_init)
+        reconstruct_weight = np.array(reconstruct_weight)
         c_init = np.zeros((np.shape(idxs)[0], self._shape[2], self._shape[3], self._c_h_channel[0]))
         h_init = np.zeros((np.shape(idxs)[0], self._shape[2], self._shape[3], self._c_h_channel[1]))
         feed_dict = {self._preds.c_init: c_init, self._preds.h_init: h_init,
                 self._labels_holder: scanpaths,
+                self._resconstruct_weight_holder: reconstruct_weight,
                 self._preds._inputs[0]: features_lr,
                 self._preds._inputs[1]: features_hr,
                 self._preds._inputs[2]: blur_img,

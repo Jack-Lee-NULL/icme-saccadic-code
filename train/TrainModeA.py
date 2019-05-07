@@ -128,7 +128,7 @@ class TrainModeA:
                         preds = sess.run(predicts, feed_dict)
                         if self._output_path != None:
                             np.save(self._output_path, preds[2])
-                            np.save('./c_img.npy', preds[1])
+                            np.save('./c_img.npy', preds[3])
                             np.save('./preds_img.npy', preds[0])
                         preds = self._decode_predicts(preds[0])
                         predictions.append(preds)
