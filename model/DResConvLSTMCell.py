@@ -54,7 +54,8 @@ class DResConvLSTMCell:
                 num_features=self._c_h_channel[1], forget_bias=self._forget_bias[1],
                 activation=self._activation[1], state_is_tuple=True)
 
-    def __call__(self, state, inputs, scope='DR_CONV_LSTM', keep_prob=0.8):
+    def __call__(self, state, inputs, scope='DR_CONV_LSTM', keep_prob=0.8,
+            mode='train'):
         """construct double resolution conv-lstm cell
         Args:
             -state: a tuple, (lr_c, lr_h, hr_c, hr_h)
@@ -67,12 +68,16 @@ class DResConvLSTMCell:
             -hr_preds: a float, in (0, 1), prediction of high resolution
             img by lr conv-lstm cell
         """
-        lr_inputs = tf.nn.dropout(inputs[0], keep_prob)
-        hr_inputs = tf.nn.dropout(inputs[1], keep_prob)
+        if mode == 'train':
+            lr_inputs = tf.nn.dropout(inputs[0], keep_prob)
+            hr_inputs = tf.nn.dropout(inputs[1], keep_prob)
+        else:
+            lr_inputs = inputs[0]
+            hr_inputs = inputs[1]
 
         lr_state, lr_preds = self._run_lr_cell(
                 state=(state[0], state[1]), inputs=lr_inputs,
-                keep_prob=keep_prob, scope=scope)
+                keep_prob=keep_prob, scope=scope, mode=mode)
         hr_input_c = tf.nn.max_pool(lr_state[0], 
                 ksize=(1, self._pool_ksize[0], self._pool_ksize[1], 1),
                 strides=self._pool_strides, padding='SAME')
@@ -83,7 +88,7 @@ class DResConvLSTMCell:
         hr_input = tf.concat([hr_input, hr_input_c], axis=3)
         hr_state, hr_preds = self._run_hr_cell(
                 state=(state[2], state[3]), inputs=hr_input,
-                keep_prob=keep_prob, scope=scope)
+                keep_prob=keep_prob, scope=scope, mode=mode)
         new_state = (lr_state[0], lr_state[1], hr_state[0], hr_state[1])
         return new_state, lr_preds, hr_preds
 
@@ -95,8 +100,9 @@ class DResConvLSTMCell:
         idx = tf.clip_by_value(idx, 0, self._shape_lr[1]*self._shape_hr[0]-1)
         return idx
 
-    def _run_lr_cell(self, state, inputs, keep_prob, scope='DR_CONV_LSTM'):
-        state = (tf.nn.dropout(state[0], keep_prob), tf.nn.dropout(state[1], keep_prob))
+    def _run_lr_cell(self, state, inputs, keep_prob, scope='DR_CONV_LSTM', mode='train'):
+        if mode == 'train':
+            state = (tf.nn.dropout(state[0], keep_prob), tf.nn.dropout(state[1], keep_prob))
         lr_c, lr_h = self._lr_cell(inputs, state=state, scope=scope+'_lr')
         lr_h_flatten = tf.layers.flatten(lr_h)
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
@@ -111,8 +117,9 @@ class DResConvLSTMCell:
         preds = lr_preds
         return new_state, preds
 
-    def _run_hr_cell(self, state, inputs, keep_prob, scope='DR_CONV_LSTM'):
-        state = (tf.nn.dropout(state[0], keep_prob), tf.nn.dropout(state[1], keep_prob))
+    def _run_hr_cell(self, state, inputs, keep_prob, scope='DR_CONV_LSTM', mode='train'):
+        if mode == 'train':
+            state = (tf.nn.dropout(state[0], keep_prob), tf.nn.dropout(state[1], keep_prob))
         hr_c, hr_h = self._hr_cell(inputs, state=state, scope=scope+'_hr')
         hr_h_flatten = tf.layers.flatten(hr_h)
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):

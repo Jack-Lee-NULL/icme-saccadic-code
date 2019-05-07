@@ -78,7 +78,7 @@ class DResConvLSTM:
                 self._shape[2], self._shape[3], self._inputs_channel[1]), 
                 name='hr_inputs')
 
-    def __call__(self):
+    def __call__(self, mode='train'):
         """construct double resolution conv-lstm model
         Returns:
             -lr_preds: a list, predctions of low resolution
@@ -88,23 +88,23 @@ class DResConvLSTM:
         """
         lr_preds = []
         hr_preds = []
+        lr_state = []
         for i in range(self._num_steps):
             scope = 'DRes_Conv_LSTM' #+ str(i)
             if i == 0:
                 lr_c = self.lr_c_init
-                #lr_h = self.lr_h_init
                 lr_h = tf.nn.l2_normalize(self.lr_h_init, axis=[1, 2, 3])
                 hr_c = self.hr_c_init
-                #hr_h = self.hr_h_init
                 hr_h = tf.nn.l2_normalize(self.hr_h_init, axis=[1, 2, 3])
                 state = (lr_c, lr_h, hr_c, hr_h)
             inputs = (self.lr_inputs[:, :, :, :],
                     self.hr_inputs[:, :, :, :, :])
             state, lr_pred, hr_pred = self._cell(
-                    state=state, inputs=inputs, scope=scope)
+                    state=state, inputs=inputs, scope=scope, mode=mode)
             lr_preds.append(lr_pred)
             hr_preds.append(hr_pred)
+            lr_state.append(state[1])
         lr_preds = tf.concat(lr_preds, axis=1)
         hr_preds = tf.concat(hr_preds, axis=1)
-        return lr_preds, hr_preds
+        return lr_preds, hr_preds, lr_state
 

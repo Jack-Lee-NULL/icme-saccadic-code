@@ -21,7 +21,8 @@ class TrainModeB(TrainModeA):
                  print_every=1, save_every=1, log_path=None, filter_size=(3, 3, 3, 3),
                  inputs_channel=(2048, 64), c_h_channel=(1, 1), forget_bias=(1.0, 1.0),
                  save_model_path=None, pretrained_model=None, feature_dir=(None, None),
-                 scanpath=(None, None), idxs=None, num_steps=8, num_validation=None):
+                 scanpath=(None, None), idxs=None, num_steps=8, num_validation=None,
+                 output_path=None):
         """Intialize TrainModeB which is extended from TrainModeA, lr indicates low 
         resolution lstm and hr indicates high resolution lstm
         Args(different from TrainModeA):
@@ -40,7 +41,7 @@ class TrainModeB(TrainModeA):
                 filter_size=filter_size, inputs_channel=inputs_channel, c_h_channel=c_h_channel,
                 forget_bias=forget_bias, init_hidden=(None, None), save_model_path=save_model_path,
                 pretrained_model=pretrained_model, feature_dir=feature_dir, scanpath=scanpath,
-                idxs=idxs, num_steps=num_steps, num_validation=num_validation)
+                idxs=idxs, num_steps=num_steps, num_validation=num_validation, output_path=output_path)
 
     def _init_model(self):
         self._preds = DResConvLSTM(filter_size=self._filter_size,
@@ -82,19 +83,9 @@ class TrainModeB(TrainModeA):
         preds[:, :, 0] = lr_preds[:, :, 0] * self._shape[3] + hr_preds[:, :, 0]
         preds[:, :, 1] = lr_preds[:, :, 1] * self._shape[2] + hr_preds[:, :, 1]
         preds = preds.astype('int32')
-        preds = np.concatenate([preds[:, :, 0], preds[:, :, 1]], axis=1)
+        #preds = np.concatenate([preds[:, :, 0], preds[:, :, 1]], axis=1)
         return preds
         
-    #def __get_hr_feature_idx(self, coord):
-    #    """Gnerate the idx in hr region feature, for sake of
-    #    drawing regions of feature as a list.
-    #    """
-    #    x = np.around(coord[:, 0] * self._shape[1], 0)
-    #    y = np.around(coord[:, 1] * self._shape[0], 0)
-    #    idx = y * self._shape[1] + x
-    #    idx = idx.astype('int32')
-    #    return idx
-
     def __get_h_init(self, shape, coord, kernel_size):
         """Generate initial hidden state by using Gaussian kernel
         blur initial coordination, sigma is -1.
@@ -120,7 +111,6 @@ class TrainModeB(TrainModeA):
         for idx in idxs:
             lr_feature = np.load(os.path.join(self._feature_dir[0], str(idx[0])+'.npy'))
             hr_feature = np.load(os.path.join(self._feature_dir[1], str(idx[0])+'.npy'))
-#            region_idx = self.__get_hr_feature_idx(self._scanpath[0][idx[0]][idx[1]][0: 8, :])
             lr_features.append(lr_feature[:, :, :])
             hr_features.append(hr_feature[:, :, :, :])
         lr_features = np.array(lr_features)

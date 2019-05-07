@@ -12,7 +12,7 @@ class ModifiedConvLSTMCellA:
     """Modified Conv-LSTM cell.
     """
 
-    def __init__(self, shape, filter_size, num_features, h_depth=1, bias_start=0.0):
+    def __init__(self, shape, filter_size, num_features, h_depth=1, bias_start=1.0):
         """Initialize Modified Conv-LSTM cell.
         Args:
             -shape: a tuple of int, the height and width of the inputs,
@@ -52,7 +52,7 @@ class ModifiedConvLSTMCellA:
                    initializer=tf.constant_initializer(self._bias_start, dtype=tf.float32))
         
            res1 = tf.nn.conv2d(f, matrix1, strides=[1, 1, 1, 1], padding='SAME')
-           res2 = tf.nn.conv2d(f, matrix2, strides=[1, 1, 1, 1], padding='SAME')
+           res2 = tf.nn.conv2d(inputs, matrix2, strides=[1, 1, 1, 1], padding='SAME')
            res1 = tf.tanh(res1 + bias1)
            res2 = tf.sigmoid(res2 + bias2)
            res1 = tf.multiply(h, c) + res1

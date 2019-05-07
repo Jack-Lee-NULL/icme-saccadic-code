@@ -6,4 +6,4 @@
 #
 
 __all__ = ['TrainModeA', 'TrainModeB', 'TrainModeC', 'TrainModeD', 'TrainModeE',
-           'TrainModeF']
+           'TrainModeF', 'TrainModeG']

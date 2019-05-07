@@ -14,7 +14,7 @@ class BasicSaccadicModel:
     """
 
     def __init__(self, shape, filter_size, inputs_channel=64,
-            c_h_channel=1, forget_bias=1.0,
+            c_h_channel=1, forget_bias=1.0, batch_size=10,
             activation=tf.nn.tanh, num_steps=8):
         """Intialize basic saccadic model
         Args:
@@ -41,6 +41,7 @@ class BasicSaccadicModel:
         self._activation = activation
         self._num_steps = num_steps
         self._inputs_channel = inputs_channel
+        self._batch_size = batch_size
         self._init_cell()
         self._init_holder()
 

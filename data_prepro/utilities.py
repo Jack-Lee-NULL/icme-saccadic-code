@@ -169,17 +169,17 @@ def postprocess_predictions(pred, shape_r, shape_c):
     return img
 
 if __name__ == '__main__':
-    ORIGIN_RESOLUTION_IMG_SET = 'imgs.npy'
-    OUTPUT_IMG_SET = 'imgs_48_64.npy'
+    ORIGIN_RESOLUTION_IMG_SET = 'imgs_48_64.npy'
+    OUTPUT_IMG_SET = 'imgs_384_512_lr'
     SCANPATH_FILE = 'TD_origin_scanpath.npy'
-    OUTPUT_SCANPATH_FILE = 'TD_48_64_normalized_scanpath.npy'
+    #OUTPUT_SCANPATH_FILE = 'TD_48_64_normalized_scanpath.npy'
     CHANNELS = 3
     NUM_STEPS = 10
-    NORMALIZATION = True
+    NORMALIZATION = False
     SAVE_IMG_SET = True
 
-    TO_ROW = 48
-    TO_COL = 64
+    TO_ROW = 384
+    TO_COL = 512
 
     scanpath = np.load(os.path.join(DATA_DIR, SCANPATH_FILE), encoding = 'latin1')
     imgs = np.load(os.path.join(DATA_DIR, ORIGIN_RESOLUTION_IMG_SET), encoding = 'latin1')

@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     init_h = []
     for i in range(300):
-        init_h.append(generate_h_init((256, 192)))
+        init_h.append(generate_h_init((384, 512)))
 
     init_h = np.array(init_h)
     np.save(OUTPUT_INIT_H, init_h)
