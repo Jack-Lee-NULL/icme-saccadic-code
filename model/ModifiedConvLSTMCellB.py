@@ -66,16 +66,17 @@ class ModifiedConvLSTMCellB(ModifiedConvLSTMCellA):
            gate_weight = tf.concat([interest, h], axis=3)
            gate_weight = tf.nn.conv2d(gate_weight, matrix3, strides=[1, 1, 1, 1], 
                    padding='SAME')
-           gate_weight = tf.nn.relu(gate_weight + bias3)
+           gate_weight = tf.nn.tanh(gate_weight + bias3)
            update_gate = tf.multiply(update_gate, gate_weight)
-           update_gate = tf.clip_by_value(update_gate, 0, 1)
+           #update_gate = tf.clip_by_value(update_gate, 0, 1)
            #update_gate = tf.nn.conv2d(update_gate, matrix4, strides=[1, 1, 1, 1],
            #        padding='SAME')
            #update_gate = tf.nn.relu(update_gate + bias4)
-           new_c = tf.reduce_max([c, update_gate], axis=0)
+           #new_c = tf.reduce_max([c, update_gate], axis=0)
+           new_c = c + update_gate
            new_h = tf.concat([interest, h], axis=3)
            new_h = tf.nn.conv2d(new_h, matrix5, strides=[1, 1, 1, 1], padding='SAME')
            new_h = tf.sigmoid(new_h + bias5)
-           new_h = tf.multiply(new_h, new_c)
+           new_h = tf.multiply(new_h, tf.tanh(new_c))
            new_state=(new_c, new_h)
            return new_state

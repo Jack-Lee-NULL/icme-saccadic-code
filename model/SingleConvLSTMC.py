@@ -54,7 +54,7 @@ class SingleConvLSTMC(SingleConvLSTMA):
             bias2 = tf.get_variable('bias2', 
                     shape=[int(inputs.shape.as_list()[3]//2)], dtype=tf.float32)
             filters3 = tf.get_variable('filter3',
-                    shape=[3, 3, inputs.shape.as_list()[3], int(inputs.shape.as_list()[3]//2)],
+                    shape=[1, 1, inputs.shape.as_list()[3], int(inputs.shape.as_list()[3]//2)],
                     dtype=tf.float32)
             preds = tf.nn.conv2d(inputs, filters1, strides=[1, 1, 1, 1], padding='SAME')
             preds = tf.sigmoid(preds + bias1)
@@ -102,7 +102,7 @@ class SingleConvLSTMC(SingleConvLSTMA):
             x = tf.nn.relu(x)
 
             x = tf.nn.conv2d_transpose(x, filters3, 
-                    [self._batch_size, int(x.shape.as_list()[1]*2),int(x.shape.as_list()[2]*2), channels3], 
+                    [self._batch_size, int(x.shape.as_list()[1]*2), int(x.shape.as_list()[2]*2), channels3], 
                     strides=[1, 2, 2, 1], padding='SAME') + bias3
             x = tf.layers.batch_normalization(x, axis=3, name='batch3_'+stage)
             x = tf.nn.relu(x)
@@ -132,7 +132,7 @@ class SingleConvLSTMC(SingleConvLSTMA):
             with tf.variable_scope('IRLSTM_Cell', reuse=tf.AUTO_REUSE):
                 merge_feature = self._attention_net(inputs, attention)
                 c, h = self._cell(merge_feature, state=state, bias_start=0.0)
-                preds = self._conv_block(c, [128, 128, 64], '1')
+                preds = self._conv_block(h, [128, 128, 64], '1')
                 preds = self._conv_block(preds, [64, 64, 32], '2')
                 filters = tf.get_variable('filters',
                         shape=[7, 7, 3, 32],
@@ -143,7 +143,7 @@ class SingleConvLSTMC(SingleConvLSTMA):
                         int(preds.shape.as_list()[2]*2), 3],
                         strides=[1, 2, 2, 1], padding='SAME') + bias
                 reconstruct = preds
-                preds = tf.abs(preds - self._inputs_3)
+                #preds = tf.abs(preds - self._inputs_3)
                 #preds = tf.layers.batch_normalization(preds, axis=3, name='batchnormal')
                 #preds = tf.nn.relu(preds)
                 #preds = tf.concat([preds, self._inputs_3], axis=3)

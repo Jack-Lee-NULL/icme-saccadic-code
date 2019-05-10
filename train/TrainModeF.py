@@ -55,7 +55,7 @@ class TrainModeF(TrainModeB):
         for i in range(self._num_steps):
             re_loss += tf.losses.mean_squared_error(labels=self._preds._inputs[2]*weight[:, i, :, :, :], 
                     predictions=reconstruct[:, i, :, :, :]) 
-        loss = 0.6 * loss + 0.4 * re_loss
+        loss = 1.0 * loss + 0.0 * re_loss
         return loss
 
     def _decode_predicts(self, predicts):

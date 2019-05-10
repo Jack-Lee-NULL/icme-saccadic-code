@@ -122,23 +122,23 @@ class TrainModeA:
                     current_loss = 0.0
                     predictions = []
                     print('generate validation result')
-                    for k in range(self._batch_size):
-                        idxs = validation_idxs[k: k+1, :]
-                        feed_dict = self._generate_feed_dict(idxs)
-                        preds = sess.run(predicts, feed_dict)
-                        if self._output_path != None:
-                            np.save(self._output_path, preds[2])
-                            np.save('./c_img.npy', preds[3])
-                            np.save('./preds_img.npy', preds[0])
-                        preds = self._decode_predicts(preds[0])
-                        predictions.append(preds)
+                    #for k in range(self._batch_size):
+                    idxs = validation_idxs[0: self._batch_size, :]
+                    feed_dict = self._generate_feed_dict(idxs)
+                    preds = sess.run(predicts, feed_dict)
+                    if self._output_path != None:
+                        np.save(self._output_path, preds[2])
+                        np.save('./c_img.npy', preds[3])
+                        np.save('./preds_img.npy', preds[0])
+                    preds = self._decode_predicts(preds[0])
+                    predictions.append(preds)
                     predictions = np.concatenate(predictions, axis=0)
                     print('generate labels')
                     labels = feed_dict[self._labels_holder]
                     np.save('./labels_img.npy', labels)
                     labels = self._decode_predicts(labels)
-                    print(predictions[-self._batch_size: np.shape(predictions)[0], :])
-                    print(labels)
+                    print(predictions[-1: np.shape(predictions)[0], :])
+                    print(labels[-1: np.shape(labels)[0], :])
                     start_t = time.time()
                 
     def _decode_predicts(self, predicts):
