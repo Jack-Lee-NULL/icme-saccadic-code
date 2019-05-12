@@ -33,8 +33,8 @@ class TrainModeF(TrainModeB):
         self._labels_holder = tf.placeholder(name='labels', 
                 shape=(None, self._num_steps, self._shape[0], self._shape[1], 1),
                 dtype=tf.float32)
-        self._resconstruct_weight_holder = tf.placeholder(name='res_weight',
-                shape=(None, self._num_steps, self._shape[0], self._shape[1], 1),
+        self._saliency_labels_holder = tf.placeholder(name='saliency_labels',
+                shape=(None, self._shape[0], self._shape[1], 1),
                 dtype=tf.float32)
 
     def _compute_loss(self):
@@ -43,19 +43,19 @@ class TrainModeF(TrainModeB):
         labels = self._labels_holder
         weight = labels >= 0.0
         weight = tf.cast(weight, dtype=tf.float32)
-        loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=preds)
+        #loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=preds)
+        loss = tf.multiply(labels, tf.log(labels*weight+1e-7))-tf.multiply(labels, tf.log(tf.sigmoid(preds)+1e-7))
         loss = weight * loss
         num = tf.reduce_max(weight, axis=[2, 3, 4])
         num = (tf.reduce_sum(num)+1)
         loss = tf.reduce_sum(loss)
         loss = loss / self._batch_size / num
-        reconstruct = preds_pack[3]
-        weight = self._resconstruct_weight_holder
-        re_loss = 0.0
-        for i in range(self._num_steps):
-            re_loss += tf.losses.mean_squared_error(labels=self._preds._inputs[2]*weight[:, i, :, :, :], 
-                    predictions=reconstruct[:, i, :, :, :]) 
-        loss = 1.0 * loss + 0.0 * re_loss
+        saliency = preds_pack[3]
+        #s_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=self._saliency_labels_holder, logits=saliency)
+        s_loss = (tf.multiply(self._saliency_labels_holder, tf.log(self._saliency_labels_holder+1e-7))
+                -tf.multiply(self._saliency_labels_holder, tf.log(tf.sigmoid(saliency)+1e-7)))
+        s_loss = tf.reduce_sum(s_loss) / self._batch_size
+        loss = 0.5 * loss + 0.5 * s_loss
         return loss
 
     def _decode_predicts(self, predicts):
@@ -100,6 +100,8 @@ class TrainModeF(TrainModeB):
         scanpaths = []
         reconstruct_weight = []
         o_init = []
+        saliency_data = np.load(self._feature_dir[3])
+        saliency = saliency_data[idxs[:, 1], :, :, np.newaxis]
         for idx in idxs:
             s = np.load(os.path.join(self._feature_dir[2], str(idx[0])+'.npy'))
             s = s[idx[1]][0: self._num_steps, :, :, np.newaxis]
@@ -110,17 +112,14 @@ class TrainModeF(TrainModeB):
             o_init.append(s_t)
             s = np.load(os.path.join(self._feature_dir[2], str(idx[0])+'.npy'))
             scanpaths.append(s[idx[1]][1: self._num_steps+1, :, :, np.newaxis])
-            reconstruct_weight.append(s[idx[1]][0: self._num_steps, :, :, np.newaxis])
         o_init = np.array(o_init)
-        reconstruct_weight = np.array(reconstruct_weight)
         c_init = np.zeros((np.shape(idxs)[0], self._shape[2], self._shape[3], self._c_h_channel[0]))
         h_init = np.zeros((np.shape(idxs)[0], self._shape[2], self._shape[3], self._c_h_channel[1]))
         feed_dict = {self._preds.c_init: c_init, self._preds.h_init: h_init,
                 self._labels_holder: scanpaths,
-                self._resconstruct_weight_holder: reconstruct_weight,
+                self._saliency_labels_holder: saliency,
                 self._preds._inputs[0]: features_lr,
                 self._preds._inputs[1]: features_hr,
-                self._preds._inputs[2]: blur_img,
                 self._preds._o_init: o_init}
         return feed_dict
 

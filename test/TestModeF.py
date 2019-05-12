@@ -22,7 +22,7 @@ class TestModeF(TestModeA):
     def _init_model(self):
         self._feature_dir = self._feature_dir.split('\n')
         self._predictor = SingleConvLSTMC(filter_size=self._filter_size,
-                batch_size=self._batch_size,
+                batch_size=1,
                 inputs_channel=self._inputs_channel, shape=self._shape,
                 c_h_channel=self._c_h_channel, forget_bias=self._forget_bias,
                 num_steps=1)
@@ -82,7 +82,6 @@ class TestModeF(TestModeA):
             features_hr.append(feature)
         features_lr = np.array(features_lr)
         features_hr = np.array(features_hr)
-        blur_img = np.array(blur_img)
 
         o_init = []
         self._o_init = np.array(self._o_init)
@@ -91,18 +90,11 @@ class TestModeF(TestModeA):
             o_init.append(o)
         o_init = np.array(o_init)
         
-
-        """
-        for idx in idxs:
-            o_init.append(self.__get_h_init((self._shape[0], self._shape[1]),
-                    coord=(0.5, 0.5), kernel_size=150))
-        """
         c_init = np.zeros((np.shape(idxs)[0], self._shape[2], self._shape[3], self._c_h_channel[0]))
         h_init = np.zeros((np.shape(idxs)[0], self._shape[2], self._shape[3], self._c_h_channel[1]))
         feed_dict = {self._predictor.c_init: c_init, self._predictor.h_init: h_init,
                 self._predictor._inputs[0]: features_lr,
                 self._predictor._inputs[1]: features_hr,
-                self._predictor._inputs[2]: blur_img,
                 self._predictor._o_init: o_init}
         return feed_dict
 

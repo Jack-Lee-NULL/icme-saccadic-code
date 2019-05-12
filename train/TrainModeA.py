@@ -58,9 +58,9 @@ class TrainModeA:
                 dtype=tf.float32)
 
     def train(self):
-        predicts = self._preds(mode='test')
+        predicts = self._preds(mode='validation')
         loss = self._compute_loss()
-        optimizer = tf.train.AdamOptimizer(learning_rate=self._learning_rate)
+        optimizer = tf.train.RMSPropOptimizer(learning_rate=self._learning_rate)
         train_op = optimizer.minimize(loss)
 
         batch_loss = tf.summary.scalar('batch_loss', loss)

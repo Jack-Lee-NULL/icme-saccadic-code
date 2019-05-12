@@ -143,7 +143,7 @@ class DResConvLSTMCellC(DResConvLSTMCell):
             
 
             state = (lr_state[0], lr_state[1], hr_state[0], hr_state[1], in_state[0], in_state[1])
-            if mode == 'test':
+            if mode == 'test' or mode == 'validation':
                 preds = tf.sigmoid(preds)
 
             return state, preds, in_preds, anchor

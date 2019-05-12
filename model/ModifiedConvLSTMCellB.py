@@ -20,23 +20,23 @@ class ModifiedConvLSTMCellB(ModifiedConvLSTMCellA):
            matrix1 = tf.get_variable(
                    'Matrix1', [self._filter_size[0], self._filter_size[1],
                    interest.shape[3]+self._h_depth, self._num_features], 
-                   dtype=tf.float32)
+                   dtype=tf.float32, initializer=tf.initializers.orthogonal)
            matrix2 = tf.get_variable(
                    'Matrix2', [self._filter_size[0], self._filter_size[1],
                    interest.shape[3]+self._h_depth, self._num_features], 
-                   dtype=tf.float32)
+                   dtype=tf.float32, initializer=tf.initializers.orthogonal)
            matrix3 = tf.get_variable(
                    'Matrix3', [self._filter_size[0], self._filter_size[1],
                    interest.shape[3]+self._h_depth, self._num_features],
-                   dtype=tf.float32)
+                   dtype=tf.float32, initializer=tf.initializers.orthogonal)
            matrix4 = tf.get_variable(
                    'Matrix4', [self._filter_size[0], self._filter_size[1],
                    self._num_features, self._num_features],
-                   dtype=tf.float32)
+                   dtype=tf.float32, initializer=tf.initializers.orthogonal)
            matrix5 = tf.get_variable(
                    'Matrix5', [self._filter_size[0], self._filter_size[1],
                    interest.shape[3]+self._h_depth, self._num_features],
-                   dtype=tf.float32)
+                   dtype=tf.float32, initializer=tf.initializers.orthogonal)
            bias1 = tf.get_variable(
                    'Bias1', [self._num_features], dtype=tf.float32,
                    initializer=tf.constant_initializer(self._bias_start, dtype=tf.float32))
